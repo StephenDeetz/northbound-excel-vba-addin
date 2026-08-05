@@ -491,9 +491,10 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
           TmpResult = TmpResult & vbLf
           TmpResult = TmpResult & String(TmpLevel * 4, " ")
 
-        Case TmpChar = "["
+        Case "["
           Inc TmpInBracketsCnt
           TmpInBrackets = True
+          TmpResult = TmpResult & TmpChar
 
         Case Else
           TmpResult = TmpResult & TmpChar
@@ -564,6 +565,11 @@ Private Sub TestPrettyPrint()
   TestPrettyPrintHelper "=IF(EOMONTH(K$2,0)<=EOMONTH('FTM P&L'!$O$2,0),XLOOKUP(EOMONTH(K$2,0),'Import Values from WB4'!$D$3300:$AM$3300,'Import Values from WB4'!$D3309:$AM3309,0,-1),0)"
 
   TestPrettyPrintHelper "=SUMPRODUCT(--(tblData[Status]=""Active""),--(tblData[Amount]>100),tblData[Value])"
+
+  'Comma and open-paren inside a bracketed structured reference must stay on
+  'one line -- bracket-tracking must protect them like quotes do.
+  TestPrettyPrintHelper "=SUM([@[Revenue, Total]])"
+  TestPrettyPrintHelper "=SUM([@[Total (Net)]])"
 
   TestPairArgPostProcess
 

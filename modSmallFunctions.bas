@@ -57,24 +57,49 @@ Public Function StrCnt(AStr As String, ASubStr As String) As Long
 End Function
 
 
+Private Sub TestStrCntHelper(ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedCnt As Long)
+  Dim TmpAnswerCnt As Long
+  Dim TmpPassFailStr As String
+
+  TmpAnswerCnt = StrCnt(AStr, ASubStr)
+  TmpPassFailStr = IIf(TmpAnswerCnt = AExpectedCnt, "PASS", "FAIL")
+
+  Debug.Print AStr; " | "; ASubStr; " | "; TmpAnswerCnt; " | "; AExpectedCnt; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestStrCnt()
-  Debug.Print StrCnt("/DDDD//", "//")
+  TestStrCntHelper "/DDDD//", "//", 1
 End Sub
 
 
 Public Function RemoveQuotedSections(ByVal AStr As String) As String
   Dim TmpResult As String
   Dim TmpInsideQuotes As Boolean
+  Dim TmpInBracketsCnt As Long
+  Dim TmpChar As String
+  Dim TmpIsDelimiter As Boolean
   Dim i As Long
 
   TmpResult = vbNullString
   TmpInsideQuotes = False
 
   For i = 1 To Len(AStr)
-    If Mid(AStr, i, 1) = """" Then
+    TmpChar = Mid$(AStr, i, 1)
+    TmpIsDelimiter = False
+
+    If TmpChar = """" Then
       TmpInsideQuotes = Not TmpInsideQuotes
-    ElseIf Not TmpInsideQuotes Then
-      TmpResult = TmpResult & Mid(AStr, i, 1)
+      TmpIsDelimiter = True
+    ElseIf Not TmpInsideQuotes And TmpChar = "[" Then
+      TmpInBracketsCnt = TmpInBracketsCnt + 1
+      TmpIsDelimiter = True
+    ElseIf Not TmpInsideQuotes And TmpChar = "]" And TmpInBracketsCnt > 0 Then
+      TmpInBracketsCnt = TmpInBracketsCnt - 1
+      TmpIsDelimiter = True
+    End If
+
+    If Not TmpIsDelimiter And Not TmpInsideQuotes And TmpInBracketsCnt = 0 Then
+      TmpResult = TmpResult & TmpChar
     End If
   Next i
 
@@ -82,13 +107,31 @@ Public Function RemoveQuotedSections(ByVal AStr As String) As String
 End Function
 
 
+Private Sub TestRemoveQuotedSectionsHelper(ByVal AOriginalStr As String, ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = RemoveQuotedSections(AOriginalStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  Debug.Print AOriginalStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestRemoveQuotedSections()
-  Debug.Print RemoveQuotedSections("Test(" & """This is the middle""" & ")")
+  TestRemoveQuotedSectionsHelper "Test(" & """This is the middle""" & ")", "Test()"
+  TestRemoveQuotedSectionsHelper "SUM([@[Revenue, Total]])", "SUM()"
+  TestRemoveQuotedSectionsHelper "A,[Col1],B", "A,,B"
+  TestRemoveQuotedSectionsHelper "[Col1],[Col2]", ","
+  TestRemoveQuotedSectionsHelper """[literal],text""" & ",A2", ",A2"
+  TestRemoveQuotedSectionsHelper "[]", vbNullString
 End Sub
 
 
 Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String, ByVal ASubStr As String) As Long
   Dim TmpInsideQuotes As Boolean
+  Dim TmpInBrackets As Boolean
+  Dim TmpInBracketsCnt As Long
+  Dim TmpChar As String
   Dim i As Long
 
   PosSkipQuotedSections = 0
@@ -96,21 +139,40 @@ Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String
   TmpInsideQuotes = False
 
   For i = AStart To Len(AStr)
-    If Mid(AStr, i, 1) = """" Then
+    TmpChar = Mid$(AStr, i, 1)
+
+    If TmpChar = """" Then
       TmpInsideQuotes = Not TmpInsideQuotes
-    ElseIf Not TmpInsideQuotes Then
+    ElseIf Not TmpInsideQuotes And Not TmpInBrackets Then
       If Mid$(AStr, i, Len(ASubStr)) = ASubStr Then
         PosSkipQuotedSections = i
         Exit Function
       End If
+    End If
+
+    If Not TmpInsideQuotes Then
+      If TmpChar = "[" Then TmpInBracketsCnt = TmpInBracketsCnt + 1
+      If TmpChar = "]" Then TmpInBracketsCnt = TmpInBracketsCnt - 1
+      TmpInBrackets = TmpInBracketsCnt > 0
     End If
   Next i
 
 End Function
 
 
+Private Sub TestPosSkipQuotedSectionsHelper(ByVal AStart As Long, ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedPos As Long)
+  Dim TmpAnswerPos As Long
+  Dim TmpPassFailStr As String
+
+  TmpAnswerPos = PosSkipQuotedSections(AStart, AStr, ASubStr)
+  TmpPassFailStr = IIf(TmpAnswerPos = AExpectedPos, "PASS", "FAIL")
+
+  Debug.Print AStart; " | "; AStr; " | "; ASubStr; " | "; TmpAnswerPos; " | "; AExpectedPos; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestPosSkipQuotedSections()
-  Debug.Print PosSkipQuotedSections(1, "=IF(A1=""("",1,2)", ")")
+  TestPosSkipQuotedSectionsHelper 1, "=IF(A1=""("",1,2)", ")", 15
+  TestPosSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", 0 'Comma is inside brackets.
 End Sub
 
 
@@ -119,6 +181,9 @@ Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
                                           ByVal ASubStr As String, _
                                           ByVal ARepStr As String) As String
   Dim TmpInsideQuotes As Boolean
+  Dim TmpInBrackets As Boolean
+  Dim TmpInBracketsCnt As Long
+  Dim TmpChar As String
   Dim i As Long
   Dim TmpResult As String
 
@@ -126,18 +191,26 @@ Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
   TmpInsideQuotes = False
 
   For i = AStart To Len(AStr)
-    If Mid$(AStr, i, 1) = """" Then
+    TmpChar = Mid$(AStr, i, 1)
+
+    If TmpChar = """" Then
       TmpInsideQuotes = Not TmpInsideQuotes
-      TmpResult = TmpResult & Mid(AStr, i, 1) ' Always include quotes
-    ElseIf Not TmpInsideQuotes Then
+      TmpResult = TmpResult & TmpChar ' Always include quotes
+    ElseIf TmpInsideQuotes Or TmpInBrackets Then
+      TmpResult = TmpResult & TmpChar 'Always include bracketed content (structured references).
+    Else
       If Mid$(AStr, i, Len(ASubStr)) = ASubStr Then
         ' Append up to the current position before skipping the substring
         TmpResult = TmpResult + ARepStr
       Else
-        TmpResult = TmpResult & Mid$(AStr, i, 1)
+        TmpResult = TmpResult & TmpChar
       End If
-    Else
-      TmpResult = TmpResult & Mid(AStr, i, 1)
+    End If
+
+    If Not TmpInsideQuotes Then
+      If TmpChar = "[" Then TmpInBracketsCnt = TmpInBracketsCnt + 1
+      If TmpChar = "]" Then TmpInBracketsCnt = TmpInBracketsCnt - 1
+      TmpInBrackets = TmpInBracketsCnt > 0
     End If
   Next i
 
@@ -145,8 +218,23 @@ Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
 End Function
 
 
+Private Sub TestReplaceSkipQuotedSectionsHelper(ByVal AStart As Long, _
+                                                ByVal AStr As String, _
+                                                ByVal ASubStr As String, _
+                                                ByVal ARepStr As String, _
+                                                ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = ReplaceSkipQuotedSections(AStart, AStr, ASubStr, ARepStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  Debug.Print AStart; " | "; AStr; " | "; ASubStr; " | "; ARepStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestReplaceSkipQuotedSections()
-  Debug.Print ReplaceSkipQuotedSections(1, "=IF(A1,""a,b"",2,3)", ",", ", ")
+  TestReplaceSkipQuotedSectionsHelper 1, "=IF(A1,""a,b"",2,3)", ",", ", ", "=IF(A1, ""a,b"", 2, 3)"
+  TestReplaceSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", ", ", "SUM([@[Revenue, Total]])"
 End Sub
 
 
@@ -169,9 +257,19 @@ Public Function ShtNameRequiresSingleQuotes(ByVal AShtNameStr As String) As Bool
 End Function
 
 
+Private Sub TestShtNameRequiresSingleQuotesHelper(ByVal AShtNameStr As String, ByVal AExpectedBool As Boolean)
+  Dim TmpAnswerBool As Boolean
+  Dim TmpPassFailStr As String
+
+  TmpAnswerBool = ShtNameRequiresSingleQuotes(AShtNameStr)
+  TmpPassFailStr = IIf(TmpAnswerBool = AExpectedBool, "PASS", "FAIL")
+
+  Debug.Print AShtNameStr; " | "; TmpAnswerBool; " | "; AExpectedBool; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestShtNameRequiresSingleQuotes()
-  Debug.Print ShtNameRequiresSingleQuotes("Sheet1")        ' Should be False
-  Debug.Print ShtNameRequiresSingleQuotes("Sheet 1")       ' Should be True
+  TestShtNameRequiresSingleQuotesHelper "Sheet1", False
+  TestShtNameRequiresSingleQuotesHelper "Sheet 1", True
 End Sub
 
 
@@ -184,9 +282,19 @@ Public Function ShtFormulaNameStr(ByVal AShtNameStr As String) As String
 End Function
 
 
+Private Sub TestShtFormulaNameStrHelper(ByVal AShtNameStr As String, ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = ShtFormulaNameStr(AShtNameStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  Debug.Print AShtNameStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestShtFormulaNameStr()
-  Debug.Print ShtFormulaNameStr("Sheet1")        ' Should be Sheet1
-  Debug.Print ShtFormulaNameStr("Sheet 1")       ' Should be 'Sheet 1'
+  TestShtFormulaNameStrHelper "Sheet1", "Sheet1"
+  TestShtFormulaNameStrHelper "Sheet 1", "'Sheet 1'"
 End Sub
 
 
