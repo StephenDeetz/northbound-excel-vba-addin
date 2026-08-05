@@ -6,11 +6,11 @@ Attribute VB_Name = "modMacroSpeedup"
 ' Purpose:
 '   Provides a one-line API for engaging and restoring Excel performance settings.
 '   This module manages and restores the following Application properties:
-'       � ScreenUpdating
-'       � Calculation
-'       � EnableEvents
-'       � DisplayAlerts
-'       � Cursor
+'       - ScreenUpdating
+'       - Calculation
+'       - EnableEvents
+'       - DisplayAlerts
+'       - Cursor
 '
 '   Typical pattern:
 '       MacroSpeedup                     ' Init + PushAll (default is msInit)
@@ -35,10 +35,10 @@ Attribute VB_Name = "modMacroSpeedup"
 ' Details:
 '   This module manages a singleton CMacroSpeedup instance that internally keeps
 '   a stack for each tracked Application property. Each Push saves the current value
-'   and sets a �fast� value. Each Pop restores the most recent saved value.
+'   and sets a "fast" value. Each Pop restores the most recent saved value.
 '
 '   Multiple nested routines can push and pop safely without overwriting each other's
-'   settings. Each property�s stack operates independently. msClear unwinds all stacks
+'   settings. Each property's stack operates independently. msClear unwinds all stacks
 '   until empty, ensuring Excel always returns to its starting configuration even if
 '   intermediate routines forget to restore their changes.
 '
@@ -47,7 +47,7 @@ Attribute VB_Name = "modMacroSpeedup"
 '           ' turn off events temporarily
 '       MacroSpeedup msPop, msEnableEvents
 '
-'   No object variables, no setup, and no cleanup required � one call in, one call out.
+'   No object variables, no setup, and no cleanup required -- one call in, one call out.
 ' ==========================================================================================
 
 Option Explicit
@@ -204,7 +204,7 @@ Private Sub TestMacroSpeedup()
   Dim TmpCursor As XlMousePointer
 
   Debug.Print String(80, "-")
-  Debug.Print "Test: MacroSpeedup � Compare Actual vs Expected"
+  Debug.Print "Test: MacroSpeedup -- Compare Actual vs Expected"
   Debug.Print String(80, "-")
 
   ' 1) Capture baseline
@@ -435,7 +435,7 @@ Private Sub Test_MacroSpeedup_IdempotentPush()
   Debug.Print String(80, "-")
 End Sub
 
-' Test F: Mid-scope override � Events pushed False, temporarily set True, pop -> expect False, then Clear -> baseline
+' Test F: Mid-scope override -- Events pushed False, temporarily set True, pop -> expect False, then Clear -> baseline
 Private Sub Test_MacroSpeedup_MidScopeOverride()
   Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
 
