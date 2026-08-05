@@ -9,17 +9,8 @@ Option Explicit
 
 'Callback for btnPrettyPrintMain onAction
 Public Sub NBPub_PrettyPrintCallback(control As IRibbonControl)
-  If Selection Is Nothing Then Exit Sub
-
-  If Selection.Cells(1, 1).HasFormula Then
-    If InStr(Selection.Cells(1, 1).Formula2, vbLf) > 0 Then
-      MinifySel
-    Else
-      PrettyPrintSel
-    End If
-  Else 'Non-Formula Cell picks Pretty Print Selection.
-    PrettyPrintSel
-  End If
+  ' "Pretty Print / Minify Toggle" => "ToggleSel"
+  ToggleSel
 End Sub
 
 'Callback for sptPrettyPrintMenu1 onAction

@@ -514,6 +514,36 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
 End Function
 
 
+'True if pretty-printing AFrmStr would actually change it. Simple formulas
+'(e.g. =SUM(A1:A10)) map to themselves under Pretty Print regardless of
+'whether they started minified or not, so this is False for them.
+Private Function PrettyPrintWouldChangeFormula(ByVal AFrmStr As String) As Boolean
+  PrettyPrintWouldChangeFormula = (PrettyPrint(AFrmStr) <> AFrmStr)
+End Function
+
+
+Private Sub TestPrettyPrintWouldChangeFormulaHelper(ByVal AFrmStr As String, ByVal AExpectedBool As Boolean)
+  Dim TmpAnswerBool As Boolean
+  Dim TmpPassFailStr As String
+
+  TmpAnswerBool = PrettyPrintWouldChangeFormula(AFrmStr)
+  TmpPassFailStr = IIf(TmpAnswerBool = AExpectedBool, "PASS", "FAIL")
+
+  Debug.Print AFrmStr; " | "; TmpAnswerBool; " | "; AExpectedBool; " | "; TmpPassFailStr
+End Sub
+
+Private Sub TestPrettyPrintWouldChangeFormula()
+  ' Simple formula: Pretty Print maps it to itself either way.
+  TestPrettyPrintWouldChangeFormulaHelper "=SUM(A1:A10)", False
+
+  ' Complex, still minified: Pretty Print would add line breaks.
+  TestPrettyPrintWouldChangeFormulaHelper "=IF(A1>0,SUM(A1:A10),0)", True
+
+  ' Complex, already pretty-printed: idempotent, nothing left to do.
+  TestPrettyPrintWouldChangeFormulaHelper PrettyPrint("=IF(A1>0,SUM(A1:A10),0)"), False
+End Sub
+
+
 Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
   LogWrite "-------------------------------------------------"
   LogWrite AFrmStr
@@ -812,6 +842,37 @@ Private Function PrettyPrintRng(ByVal ARng As Range, _
 
 End Function
 
+
+'True if any formula cell in ARng would actually change under Pretty Print.
+'Used by ToggleSel to decide Minify vs Pretty Print with a definitive test
+'("is there anything left for Pretty Print to do?") rather than inferring
+'from vbLf presence, which simple formulas can't distinguish.
+Private Function PrettyPrintWouldChangeRng(ByVal ARng As Range) As Boolean
+  Dim TmpCell As Range
+  Dim TmpRng As Range
+
+  PrettyPrintWouldChangeRng = False
+
+  'Get Around 1 Cell Selected Searches Whole Sheet
+  If ARng.Count = 1 Then
+    If ARng.HasFormula Then
+      PrettyPrintWouldChangeRng = PrettyPrintWouldChangeFormula(ARng.Formula2)
+    End If
+    Exit Function
+  End If
+
+  Set TmpRng = SpecialCellsSafe(ARng, XlCellType.xlCellTypeFormulas)
+  If TmpRng Is Nothing Then Exit Function
+
+  For Each TmpCell In TmpRng
+    If PrettyPrintWouldChangeFormula(TmpCell.Formula2) Then
+      PrettyPrintWouldChangeRng = True
+      Exit Function
+    End If
+  Next TmpCell
+
+End Function
+
 '----------------------------------------------------------------------'
 '                          Sheet Level Functions                       '
 '----------------------------------------------------------------------'
@@ -894,6 +955,19 @@ End Function
 '----------------------------------------------------------------------'
 '                         Public Functions                             '
 '----------------------------------------------------------------------'
+
+'Ribbon default action: Pretty Print if anything in the selection would
+'actually change under Pretty Print; Minify if nothing would (i.e. every
+'formula is already as pretty as it gets).
+Public Sub ToggleSel()
+  If Selection Is Nothing Then Exit Sub
+
+  If PrettyPrintWouldChangeRng(Selection) Then
+    PrettyPrintSel
+  Else
+    MinifySel
+  End If
+End Sub
 
 Public Sub MinifySel()
   Dim TmpSuccCnt As Long
@@ -1031,6 +1105,8 @@ Public Sub PrettyPrintActiveWbk()
 
   MsgBox TmpResultStr
 End Sub
+
+
 
 
 
