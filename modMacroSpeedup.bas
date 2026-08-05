@@ -6,11 +6,11 @@ Attribute VB_Name = "modMacroSpeedup"
 ' Purpose:
 '   Provides a one-line API for engaging and restoring Excel performance settings.
 '   This module manages and restores the following Application properties:
-'       • ScreenUpdating
-'       • Calculation
-'       • EnableEvents
-'       • DisplayAlerts
-'       • Cursor
+'       ï¿½ ScreenUpdating
+'       ï¿½ Calculation
+'       ï¿½ EnableEvents
+'       ï¿½ DisplayAlerts
+'       ï¿½ Cursor
 '
 '   Typical pattern:
 '       MacroSpeedup                     ' Init + PushAll (default is msInit)
@@ -35,10 +35,10 @@ Attribute VB_Name = "modMacroSpeedup"
 ' Details:
 '   This module manages a singleton CMacroSpeedup instance that internally keeps
 '   a stack for each tracked Application property. Each Push saves the current value
-'   and sets a “fast” value. Each Pop restores the most recent saved value.
+'   and sets a ï¿½fastï¿½ value. Each Pop restores the most recent saved value.
 '
 '   Multiple nested routines can push and pop safely without overwriting each other's
-'   settings. Each property’s stack operates independently. msClear unwinds all stacks
+'   settings. Each propertyï¿½s stack operates independently. msClear unwinds all stacks
 '   until empty, ensuring Excel always returns to its starting configuration even if
 '   intermediate routines forget to restore their changes.
 '
@@ -47,7 +47,7 @@ Attribute VB_Name = "modMacroSpeedup"
 '           ' turn off events temporarily
 '       MacroSpeedup msPop, msEnableEvents
 '
-'   No object variables, no setup, and no cleanup required — one call in, one call out.
+'   No object variables, no setup, and no cleanup required ï¿½ one call in, one call out.
 ' ==========================================================================================
 
 Option Explicit
@@ -140,371 +140,371 @@ End Sub
 
 
 
-'' ============================
-'' Test: MacroSpeedup Test Helpers
-'' ============================
-'
-'' Pretty-print a single assertion row
-'Private Sub PPResult(ByVal ACase As String, _
-'                     ByVal AExpected As String, _
-'                     ByVal AActual As String)
-'  Dim PassFail As String
-'  PassFail = IIf(StrComp(AExpected, AActual, vbBinaryCompare) = 0, "PASS", "FAIL")
-'  Debug.Print ACase & " | Expected: " & AExpected & " | Actual: " & AActual & " | " & PassFail
-'End Sub
-'
-'' Helpers to stringify the properties we test
-'Private Function BStr(ByVal ABool As Boolean) As String
-'  BStr = IIf(ABool, "True", "False")
-'End Function
-'
-'Private Function CalcStr(ByVal ACalc As XlCalculation) As String
-'  Select Case ACalc
-'    Case xlCalculationAutomatic: CalcStr = "Automatic"
-'    Case xlCalculationManual:    CalcStr = "Manual"
-'    Case xlCalculationSemiautomatic: CalcStr = "Semiautomatic"
-'    Case Else: CalcStr = CStr(ACalc)
-'  End Select
-'End Function
-'
-'Private Function CursorStr(ByVal ACursor As XlMousePointer) As String
-'  Select Case ACursor
-'    Case xlDefault: CursorStr = "Default"
-'    Case xlWait:    CursorStr = "Wait"
-'    Case xlNorthwestArrow: CursorStr = "NWArrow"
-'    Case xlIBeam:   CursorStr = "IBeam"
-'    Case Else:      CursorStr = CStr(ACursor)
-'  End Select
-'End Function
-'
-'Private Sub SnapshotState(ByRef OutScreenUpdating As Boolean, _
-'                          ByRef OutCalc As XlCalculation, _
-'                          ByRef OutEvents As Boolean, _
-'                          ByRef OutAlerts As Boolean, _
-'                          ByRef OutCursor As XlMousePointer)
-'  OutScreenUpdating = Application.ScreenUpdating
-'  OutCalc = Application.Calculation
-'  OutEvents = Application.EnableEvents
-'  OutAlerts = Application.DisplayAlerts
-'  OutCursor = Application.Cursor
-'End Sub
+' ============================
+' Test: MacroSpeedup Test Helpers
+' ============================
 
-'' ============================
-'' Test: MacroSpeedup end-to-end
-'' ============================
-'Private Sub TestMacroSpeedup()
-'  Dim BaseScreenUpdating As Boolean
-'  Dim BaseCalc As XlCalculation
-'  Dim BaseEvents As Boolean
-'  Dim BaseAlerts As Boolean
-'  Dim BaseCursor As XlMousePointer
-'
-'  Dim TmpBool As Boolean
-'  Dim TmpCalc As XlCalculation
-'  Dim TmpCursor As XlMousePointer
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test: MacroSpeedup – Compare Actual vs Expected"
-'  Debug.Print String(80, "-")
-'
-'  ' 1) Capture baseline
-'  SnapshotState BaseScreenUpdating, BaseCalc, BaseEvents, BaseAlerts, BaseCursor
-'  Debug.Print "Baseline captured."
-'
-'  ' 2) Init (push-all) ? expect fast values
-'  MacroSpeedup msInit
-'
-'  PPResult "Init.ScreenUpdating", "False", BStr(Application.ScreenUpdating)
-'  PPResult "Init.Calculation", "Manual", CalcStr(Application.Calculation)
-'  PPResult "Init.EnableEvents", "False", BStr(Application.EnableEvents)
-'  PPResult "Init.DisplayAlerts", "False", BStr(Application.DisplayAlerts)
-'  PPResult "Init.Cursor", "Wait", CursorStr(Application.Cursor)
-'
-'  ' 3) Nested push of a single item (EnableEvents), then temporary override, then pop ? should restore to False
-'  MacroSpeedup msPush, msEnableEvents
-'  ' temporarily override to True (simulating a routine that needed one event fire)
-'  Application.EnableEvents = True
-'  MacroSpeedup msPop, msEnableEvents
-'  PPResult "Nested.Events.RestoredToFast", "False", BStr(Application.EnableEvents)
-'
-'  ' 4) Mixed-order push/pop of two items should restore to pre-push state for each
-'  ' Capture current states (fast mode still on from Init)
-'  TmpCalc = Application.Calculation
-'  TmpBool = Application.DisplayAlerts
-'
-'  MacroSpeedup msPush, msCalculation
-'  MacroSpeedup msPush, msDisplayAlerts
-'  ' Pop in reverse (calc first), ensure each restores to the exact prior of its own push
-'  MacroSpeedup msPop, msCalculation
-'  PPResult "MixedOrder.CalcRestored", CalcStr(TmpCalc), CalcStr(Application.Calculation)
-'  MacroSpeedup msPop, msDisplayAlerts
-'  PPResult "MixedOrder.AlertsRestored", BStr(TmpBool), BStr(Application.DisplayAlerts)
-'
-'  ' 5) Pop on empty (safety): should be no change
-'  ' First, clear all to restore to baseline
-'  MacroSpeedup msClear
-'  PPResult "Clear.ScreenUpdating", BStr(BaseScreenUpdating), BStr(Application.ScreenUpdating)
-'  PPResult "Clear.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
-'  PPResult "Clear.EnableEvents", BStr(BaseEvents), BStr(Application.EnableEvents)
-'  PPResult "Clear.DisplayAlerts", BStr(BaseAlerts), BStr(Application.DisplayAlerts)
-'  PPResult "Clear.Cursor", CursorStr(BaseCursor), CursorStr(Application.Cursor)
-'
-'  ' Try popping when stacks are empty
-'  MacroSpeedup msPop, msScreenUpdating
-'  MacroSpeedup msPop, msCalculation
-'  MacroSpeedup msPop, msEnableEvents
-'  MacroSpeedup msPop, msDisplayAlerts
-'  MacroSpeedup msPop, msCursor
-'
-'  PPResult "PopEmpty.ScreenUpdatingNoChange", BStr(BaseScreenUpdating), BStr(Application.ScreenUpdating)
-'  PPResult "PopEmpty.CalculationNoChange", CalcStr(BaseCalc), CalcStr(Application.Calculation)
-'  PPResult "PopEmpty.EnableEventsNoChange", BStr(BaseEvents), BStr(Application.EnableEvents)
-'  PPResult "PopEmpty.DisplayAlertsNoChange", BStr(BaseAlerts), BStr(Application.DisplayAlerts)
-'  PPResult "PopEmpty.CursorNoChange", CursorStr(BaseCursor), CursorStr(Application.Cursor)
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test complete."
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'' ============================
-'' Extra Tests: place below existing tests
-'' ============================
-'
-'' Test A: Push/Pop all-items explicitly (msPush/msPop)
-'Private Sub Test_MacroSpeedup_AllItemsPushPop()
-'  Dim SU0 As Boolean, C0 As XlCalculation, EV0 As Boolean, AL0 As Boolean, CUR0 As XlMousePointer
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_AllItemsPushPop"
-'  Debug.Print String(80, "-")
-'
-'  SnapshotState SU0, C0, EV0, AL0, CUR0
-'
-'  ' Push ALL (default msAllItems when omitted)
-'  MacroSpeedup msPush
-'  PPResult "PushAll.ScreenUpdating", "False", BStr(Application.ScreenUpdating)
-'  PPResult "PushAll.Calculation", "Manual", CalcStr(Application.Calculation)
-'  PPResult "PushAll.EnableEvents", "False", BStr(Application.EnableEvents)
-'  PPResult "PushAll.DisplayAlerts", "False", BStr(Application.DisplayAlerts)
-'  PPResult "PushAll.Cursor", "Wait", CursorStr(Application.Cursor)
-'
-'  ' Pop ALL
-'  MacroSpeedup msPop
-'  PPResult "PopAll.ScreenUpdatingRestored", BStr(SU0), BStr(Application.ScreenUpdating)
-'  PPResult "PopAll.CalculationRestored", CalcStr(C0), CalcStr(Application.Calculation)
-'  PPResult "PopAll.EnableEventsRestored", BStr(EV0), BStr(Application.EnableEvents)
-'  PPResult "PopAll.DisplayAlertsRestored", BStr(AL0), BStr(Application.DisplayAlerts)
-'  PPResult "PopAll.CursorRestored", CursorStr(CUR0), CursorStr(Application.Cursor)
-'
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'' Test B: Deep nesting (multiple pushes each item)
-'Private Sub Test_MacroSpeedup_NestedDepth()
-'  Dim SU0 As Boolean, C0 As XlCalculation, EV0 As Boolean, AL0 As Boolean, CUR0 As XlMousePointer
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_NestedDepth"
-'  Debug.Print String(80, "-")
-'
-'  SnapshotState SU0, C0, EV0, AL0, CUR0
-'
-'  MacroSpeedup msInit                      ' level 1 (all)
-'  MacroSpeedup msPush, msEnableEvents      ' level 2 (events)
-'  MacroSpeedup msPush, msEnableEvents      ' level 3 (events again)
-'  MacroSpeedup msPush, msCalculation       ' level 4 (calc)
-'  MacroSpeedup msPush, msDisplayAlerts     ' level 5 (alerts)
-'
-'  ' Partial unwind in mixed order
-'  MacroSpeedup msPop, msEnableEvents
-'  MacroSpeedup msPop, msDisplayAlerts
-'  MacroSpeedup msPop, msCalculation
-'  MacroSpeedup msPop, msEnableEvents
-'
-'  ' Final unwind
-'  MacroSpeedup msClear
-'
-'  PPResult "NestedDepth.ScreenUpdatingRestored", BStr(SU0), BStr(Application.ScreenUpdating)
-'  PPResult "NestedDepth.CalculationRestored", CalcStr(C0), CalcStr(Application.Calculation)
-'  PPResult "NestedDepth.EnableEventsRestored", BStr(EV0), BStr(Application.EnableEvents)
-'  PPResult "NestedDepth.DisplayAlertsRestored", BStr(AL0), BStr(Application.DisplayAlerts)
-'  PPResult "NestedDepth.CursorRestored", CursorStr(CUR0), CursorStr(Application.Cursor)
-'
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'' Test C: Respect user's Manual baseline
-'Private Sub Test_MacroSpeedup_ManualBaseline()
-'  Dim C0 As XlCalculation
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_ManualBaseline"
-'  Debug.Print String(80, "-")
-'
-'  ' Force a non-default baseline deliberately
-'  C0 = Application.Calculation
-'  Application.Calculation = xlCalculationManual
-'
-'  MacroSpeedup msInit       ' stores Manual, sets Manual (idempotent)
-'  MacroSpeedup msClear      ' must restore to Manual (not Automatic)
-'
-'  PPResult "ManualBaseline.Restored", "Manual", CalcStr(Application.Calculation)
-'
-'  ' restore original baseline
-'  Application.Calculation = C0
-'
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'' Test D: Interleaved sequences + ClearAll as finalizer
-'Private Sub Test_MacroSpeedup_Interleaved()
-'  Dim SU0 As Boolean, C0 As XlCalculation, EV0 As Boolean, AL0 As Boolean, CUR0 As XlMousePointer
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_Interleaved"
-'  Debug.Print String(80, "-")
-'
-'  SnapshotState SU0, C0, EV0, AL0, CUR0
-'
-'  MacroSpeedup msPush, msScreenUpdating
-'  MacroSpeedup msPush, msDisplayAlerts
-'  MacroSpeedup msPush, msCalculation
-'
-'  ' Intentionally pop only some
-'  MacroSpeedup msPop, msDisplayAlerts
-'  MacroSpeedup msPush, msEnableEvents
-'  MacroSpeedup msPush, msCursor
-'
-'  ' Finalizer must unwind everything
-'  MacroSpeedup msClear
-'
-'  PPResult "Interleaved.ScreenUpdatingRestored", BStr(SU0), BStr(Application.ScreenUpdating)
-'  PPResult "Interleaved.CalculationRestored", CalcStr(C0), CalcStr(Application.Calculation)
-'  PPResult "Interleaved.EnableEventsRestored", BStr(EV0), BStr(Application.EnableEvents)
-'  PPResult "Interleaved.DisplayAlertsRestored", BStr(AL0), BStr(Application.DisplayAlerts)
-'  PPResult "Interleaved.CursorRestored", CursorStr(CUR0), CursorStr(Application.Cursor)
-'
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'
-'' ============================
-'' Extra Micro-Tests
-'' ============================
-'
-'' Test E: Idempotent pushes on a single item (3x) with stepwise pops
-'Private Sub Test_MacroSpeedup_IdempotentPush()
-'  Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
-'  Dim StepState As String
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_IdempotentPush"
-'  Debug.Print String(80, "-")
-'
-'  SnapshotState BaseSU, BaseCalc, BaseEv, BaseAl, BaseCur
-'
-'  ' Use DisplayAlerts for clarity
-'  MacroSpeedup msPush, msDisplayAlerts    ' push 1
-'  MacroSpeedup msPush, msDisplayAlerts    ' push 2
-'  MacroSpeedup msPush, msDisplayAlerts    ' push 3
-'
-'  ' While stacked, value is forced False
-'  PPResult "Idem.Push3.AlertsFast", "False", BStr(Application.DisplayAlerts)
-'
-'  ' Pop once -> still False (prior layer had False)
-'  MacroSpeedup msPop, msDisplayAlerts
-'  PPResult "Idem.Pop1.AlertsStillFast", "False", BStr(Application.DisplayAlerts)
-'
-'  ' Pop twice -> still False (prior layer had False)
-'  MacroSpeedup msPop, msDisplayAlerts
-'  PPResult "Idem.Pop2.AlertsStillFast", "False", BStr(Application.DisplayAlerts)
-'
-'  ' Pop third -> baseline restored
-'  MacroSpeedup msPop, msDisplayAlerts
-'  PPResult "Idem.Pop3.AlertsBaseline", BStr(BaseAl), BStr(Application.DisplayAlerts)
-'
-'  ' Safety: Clear should now be a no-op on Alerts
-'  MacroSpeedup msClear
-'  PPResult "Idem.Clear.Baseline.Alerts", BStr(BaseAl), BStr(Application.DisplayAlerts)
-'  PPResult "Idem.Clear.Baseline.ScreenUpdating", BStr(BaseSU), BStr(Application.ScreenUpdating)
-'  PPResult "Idem.Clear.Baseline.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
-'  PPResult "Idem.Clear.Baseline.EnableEvents", BStr(BaseEv), BStr(Application.EnableEvents)
-'  PPResult "Idem.Clear.Baseline.Cursor", CursorStr(BaseCur), CursorStr(Application.Cursor)
-'
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'' Test F: Mid-scope override — Events pushed False, temporarily set True, pop -> expect False, then Clear -> baseline
-'Private Sub Test_MacroSpeedup_MidScopeOverride()
-'  Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_MidScopeOverride"
-'  Debug.Print String(80, "-")
-'
-'  SnapshotState BaseSU, BaseCalc, BaseEv, BaseAl, BaseCur
-'
-'  MacroSpeedup msInit                    ' all fast (Events=False)
-'  MacroSpeedup msPush, msEnableEvents    ' push another layer for Events
-'
-'  ' Temporary override inside routine
-'  Application.EnableEvents = True
-'  PPResult "Override.Events.TempTrue", "True", BStr(Application.EnableEvents)
-'
-'  ' Pop should restore to fast (False), not baseline
-'  MacroSpeedup msPop, msEnableEvents
-'  PPResult "Override.Events.RestoredToFast", "False", BStr(Application.EnableEvents)
-'
-'  ' Finalize
-'  MacroSpeedup msClear
-'  PPResult "Override.Clear.ScreenUpdating", BStr(BaseSU), BStr(Application.ScreenUpdating)
-'  PPResult "Override.Clear.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
-'  PPResult "Override.Clear.EnableEvents", BStr(BaseEv), BStr(Application.EnableEvents)
-'  PPResult "Override.Clear.DisplayAlerts", BStr(BaseAl), BStr(Application.DisplayAlerts)
-'  PPResult "Override.Clear.Cursor", CursorStr(BaseCur), CursorStr(Application.Cursor)
-'
-'  Debug.Print String(80, "-")
-'End Sub
-'
-'' Test G: Error-path finalizer — simulate error after pushes, ensure Clear restores baseline in handler
-'Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
-'  Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
-'
-'  Debug.Print String(80, "-")
-'  Debug.Print "Test_MacroSpeedup_ErrorPathFinalizer"
-'  Debug.Print String(80, "-")
-'
-'  SnapshotState BaseSU, BaseCalc, BaseEv, BaseAl, BaseCur
-'
-'  On Error GoTo ErrLabel
-'
-'  ' Push a mix of items, leave some unpopped
-'  MacroSpeedup msPush, msScreenUpdating
-'  MacroSpeedup msPush, msCalculation
-'  MacroSpeedup msPush, msDisplayAlerts
-'  MacroSpeedup msPush, msCursor
-'
-'  ' Simulate an error mid-routine
-'  err.Raise 12345, "Test_MacroSpeedup_ErrorPathFinalizer", "Simulated error for test"
-'
-'  ' (unreached)
-'  Debug.Print "ERROR: test did not raise as expected."
-'  GoTo AfterErr
-'
-'ErrLabel:
-'  ' Finalizer path — ensure everything is unwound
-'  MacroSpeedup msClear
-'
-'  ' Asserts: baseline restored
-'  PPResult "ErrorPath.Restore.ScreenUpdating", BStr(BaseSU), BStr(Application.ScreenUpdating)
-'  PPResult "ErrorPath.Restore.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
-'  PPResult "ErrorPath.Restore.EnableEvents", BStr(BaseEv), BStr(Application.EnableEvents)
-'  PPResult "ErrorPath.Restore.DisplayAlerts", BStr(BaseAl), BStr(Application.DisplayAlerts)
-'  PPResult "ErrorPath.Restore.Cursor", CursorStr(BaseCur), CursorStr(Application.Cursor)
-'
-'AfterErr:
-'  On Error GoTo 0
-'  Debug.Print String(80, "-")
-'End Sub
-'
+' Pretty-print a single assertion row
+Private Sub PPResult(ByVal ACase As String, _
+                     ByVal AExpected As String, _
+                     ByVal AActual As String)
+  Dim PassFail As String
+  PassFail = IIf(StrComp(AExpected, AActual, vbBinaryCompare) = 0, "PASS", "FAIL")
+  Debug.Print ACase & " | Expected: " & AExpected & " | Actual: " & AActual & " | " & PassFail
+End Sub
+
+' Helpers to stringify the properties we test
+Private Function BStr(ByVal ABool As Boolean) As String
+  BStr = IIf(ABool, "True", "False")
+End Function
+
+Private Function CalcStr(ByVal ACalc As XlCalculation) As String
+  Select Case ACalc
+    Case xlCalculationAutomatic: CalcStr = "Automatic"
+    Case xlCalculationManual:    CalcStr = "Manual"
+    Case xlCalculationSemiautomatic: CalcStr = "Semiautomatic"
+    Case Else: CalcStr = CStr(ACalc)
+  End Select
+End Function
+
+Private Function CursorStr(ByVal ACursor As XlMousePointer) As String
+  Select Case ACursor
+    Case xlDefault: CursorStr = "Default"
+    Case xlWait:    CursorStr = "Wait"
+    Case xlNorthwestArrow: CursorStr = "NWArrow"
+    Case xlIBeam:   CursorStr = "IBeam"
+    Case Else:      CursorStr = CStr(ACursor)
+  End Select
+End Function
+
+Private Sub SnapshotState(ByRef OutScreenUpdating As Boolean, _
+                          ByRef OutCalc As XlCalculation, _
+                          ByRef OutEvents As Boolean, _
+                          ByRef OutAlerts As Boolean, _
+                          ByRef OutCursor As XlMousePointer)
+  OutScreenUpdating = Application.ScreenUpdating
+  OutCalc = Application.Calculation
+  OutEvents = Application.EnableEvents
+  OutAlerts = Application.DisplayAlerts
+  OutCursor = Application.Cursor
+End Sub
+
+' ============================
+' Test: MacroSpeedup end-to-end
+' ============================
+Private Sub TestMacroSpeedup()
+  Dim BaseScreenUpdating As Boolean
+  Dim BaseCalc As XlCalculation
+  Dim BaseEvents As Boolean
+  Dim BaseAlerts As Boolean
+  Dim BaseCursor As XlMousePointer
+
+  Dim TmpBool As Boolean
+  Dim TmpCalc As XlCalculation
+  Dim TmpCursor As XlMousePointer
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test: MacroSpeedup ï¿½ Compare Actual vs Expected"
+  Debug.Print String(80, "-")
+
+  ' 1) Capture baseline
+  SnapshotState BaseScreenUpdating, BaseCalc, BaseEvents, BaseAlerts, BaseCursor
+  Debug.Print "Baseline captured."
+
+  ' 2) Init (push-all) ? expect fast values
+  MacroSpeedup msInit
+
+  PPResult "Init.ScreenUpdating", "False", BStr(Application.ScreenUpdating)
+  PPResult "Init.Calculation", "Manual", CalcStr(Application.Calculation)
+  PPResult "Init.EnableEvents", "False", BStr(Application.EnableEvents)
+  PPResult "Init.DisplayAlerts", "False", BStr(Application.DisplayAlerts)
+  PPResult "Init.Cursor", "Wait", CursorStr(Application.Cursor)
+
+  ' 3) Nested push of a single item (EnableEvents), then temporary override, then pop ? should restore to False
+  MacroSpeedup msPush, msEnableEvents
+  ' temporarily override to True (simulating a routine that needed one event fire)
+  Application.EnableEvents = True
+  MacroSpeedup msPop, msEnableEvents
+  PPResult "Nested.Events.RestoredToFast", "False", BStr(Application.EnableEvents)
+
+  ' 4) Mixed-order push/pop of two items should restore to pre-push state for each
+  ' Capture current states (fast mode still on from Init)
+  TmpCalc = Application.Calculation
+  TmpBool = Application.DisplayAlerts
+
+  MacroSpeedup msPush, msCalculation
+  MacroSpeedup msPush, msDisplayAlerts
+  ' Pop in reverse (calc first), ensure each restores to the exact prior of its own push
+  MacroSpeedup msPop, msCalculation
+  PPResult "MixedOrder.CalcRestored", CalcStr(TmpCalc), CalcStr(Application.Calculation)
+  MacroSpeedup msPop, msDisplayAlerts
+  PPResult "MixedOrder.AlertsRestored", BStr(TmpBool), BStr(Application.DisplayAlerts)
+
+  ' 5) Pop on empty (safety): should be no change
+  ' First, clear all to restore to baseline
+  MacroSpeedup msClear
+  PPResult "Clear.ScreenUpdating", BStr(BaseScreenUpdating), BStr(Application.ScreenUpdating)
+  PPResult "Clear.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
+  PPResult "Clear.EnableEvents", BStr(BaseEvents), BStr(Application.EnableEvents)
+  PPResult "Clear.DisplayAlerts", BStr(BaseAlerts), BStr(Application.DisplayAlerts)
+  PPResult "Clear.Cursor", CursorStr(BaseCursor), CursorStr(Application.Cursor)
+
+  ' Try popping when stacks are empty
+  MacroSpeedup msPop, msScreenUpdating
+  MacroSpeedup msPop, msCalculation
+  MacroSpeedup msPop, msEnableEvents
+  MacroSpeedup msPop, msDisplayAlerts
+  MacroSpeedup msPop, msCursor
+
+  PPResult "PopEmpty.ScreenUpdatingNoChange", BStr(BaseScreenUpdating), BStr(Application.ScreenUpdating)
+  PPResult "PopEmpty.CalculationNoChange", CalcStr(BaseCalc), CalcStr(Application.Calculation)
+  PPResult "PopEmpty.EnableEventsNoChange", BStr(BaseEvents), BStr(Application.EnableEvents)
+  PPResult "PopEmpty.DisplayAlertsNoChange", BStr(BaseAlerts), BStr(Application.DisplayAlerts)
+  PPResult "PopEmpty.CursorNoChange", CursorStr(BaseCursor), CursorStr(Application.Cursor)
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test complete."
+  Debug.Print String(80, "-")
+End Sub
+
+' ============================
+' Extra Tests: place below existing tests
+' ============================
+
+' Test A: Push/Pop all-items explicitly (msPush/msPop)
+Private Sub Test_MacroSpeedup_AllItemsPushPop()
+  Dim SU0 As Boolean, C0 As XlCalculation, EV0 As Boolean, AL0 As Boolean, CUR0 As XlMousePointer
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_AllItemsPushPop"
+  Debug.Print String(80, "-")
+
+  SnapshotState SU0, C0, EV0, AL0, CUR0
+
+  ' Push ALL (default msAllItems when omitted)
+  MacroSpeedup msPush
+  PPResult "PushAll.ScreenUpdating", "False", BStr(Application.ScreenUpdating)
+  PPResult "PushAll.Calculation", "Manual", CalcStr(Application.Calculation)
+  PPResult "PushAll.EnableEvents", "False", BStr(Application.EnableEvents)
+  PPResult "PushAll.DisplayAlerts", "False", BStr(Application.DisplayAlerts)
+  PPResult "PushAll.Cursor", "Wait", CursorStr(Application.Cursor)
+
+  ' Pop ALL
+  MacroSpeedup msPop
+  PPResult "PopAll.ScreenUpdatingRestored", BStr(SU0), BStr(Application.ScreenUpdating)
+  PPResult "PopAll.CalculationRestored", CalcStr(C0), CalcStr(Application.Calculation)
+  PPResult "PopAll.EnableEventsRestored", BStr(EV0), BStr(Application.EnableEvents)
+  PPResult "PopAll.DisplayAlertsRestored", BStr(AL0), BStr(Application.DisplayAlerts)
+  PPResult "PopAll.CursorRestored", CursorStr(CUR0), CursorStr(Application.Cursor)
+
+  Debug.Print String(80, "-")
+End Sub
+
+' Test B: Deep nesting (multiple pushes each item)
+Private Sub Test_MacroSpeedup_NestedDepth()
+  Dim SU0 As Boolean, C0 As XlCalculation, EV0 As Boolean, AL0 As Boolean, CUR0 As XlMousePointer
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_NestedDepth"
+  Debug.Print String(80, "-")
+
+  SnapshotState SU0, C0, EV0, AL0, CUR0
+
+  MacroSpeedup msInit                      ' level 1 (all)
+  MacroSpeedup msPush, msEnableEvents      ' level 2 (events)
+  MacroSpeedup msPush, msEnableEvents      ' level 3 (events again)
+  MacroSpeedup msPush, msCalculation       ' level 4 (calc)
+  MacroSpeedup msPush, msDisplayAlerts     ' level 5 (alerts)
+
+  ' Partial unwind in mixed order
+  MacroSpeedup msPop, msEnableEvents
+  MacroSpeedup msPop, msDisplayAlerts
+  MacroSpeedup msPop, msCalculation
+  MacroSpeedup msPop, msEnableEvents
+
+  ' Final unwind
+  MacroSpeedup msClear
+
+  PPResult "NestedDepth.ScreenUpdatingRestored", BStr(SU0), BStr(Application.ScreenUpdating)
+  PPResult "NestedDepth.CalculationRestored", CalcStr(C0), CalcStr(Application.Calculation)
+  PPResult "NestedDepth.EnableEventsRestored", BStr(EV0), BStr(Application.EnableEvents)
+  PPResult "NestedDepth.DisplayAlertsRestored", BStr(AL0), BStr(Application.DisplayAlerts)
+  PPResult "NestedDepth.CursorRestored", CursorStr(CUR0), CursorStr(Application.Cursor)
+
+  Debug.Print String(80, "-")
+End Sub
+
+' Test C: Respect user's Manual baseline
+Private Sub Test_MacroSpeedup_ManualBaseline()
+  Dim C0 As XlCalculation
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_ManualBaseline"
+  Debug.Print String(80, "-")
+
+  ' Force a non-default baseline deliberately
+  C0 = Application.Calculation
+  Application.Calculation = xlCalculationManual
+
+  MacroSpeedup msInit       ' stores Manual, sets Manual (idempotent)
+  MacroSpeedup msClear      ' must restore to Manual (not Automatic)
+
+  PPResult "ManualBaseline.Restored", "Manual", CalcStr(Application.Calculation)
+
+  ' restore original baseline
+  Application.Calculation = C0
+
+  Debug.Print String(80, "-")
+End Sub
+
+' Test D: Interleaved sequences + ClearAll as finalizer
+Private Sub Test_MacroSpeedup_Interleaved()
+  Dim SU0 As Boolean, C0 As XlCalculation, EV0 As Boolean, AL0 As Boolean, CUR0 As XlMousePointer
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_Interleaved"
+  Debug.Print String(80, "-")
+
+  SnapshotState SU0, C0, EV0, AL0, CUR0
+
+  MacroSpeedup msPush, msScreenUpdating
+  MacroSpeedup msPush, msDisplayAlerts
+  MacroSpeedup msPush, msCalculation
+
+  ' Intentionally pop only some
+  MacroSpeedup msPop, msDisplayAlerts
+  MacroSpeedup msPush, msEnableEvents
+  MacroSpeedup msPush, msCursor
+
+  ' Finalizer must unwind everything
+  MacroSpeedup msClear
+
+  PPResult "Interleaved.ScreenUpdatingRestored", BStr(SU0), BStr(Application.ScreenUpdating)
+  PPResult "Interleaved.CalculationRestored", CalcStr(C0), CalcStr(Application.Calculation)
+  PPResult "Interleaved.EnableEventsRestored", BStr(EV0), BStr(Application.EnableEvents)
+  PPResult "Interleaved.DisplayAlertsRestored", BStr(AL0), BStr(Application.DisplayAlerts)
+  PPResult "Interleaved.CursorRestored", CursorStr(CUR0), CursorStr(Application.Cursor)
+
+  Debug.Print String(80, "-")
+End Sub
+
+
+' ============================
+' Extra Micro-Tests
+' ============================
+
+' Test E: Idempotent pushes on a single item (3x) with stepwise pops
+Private Sub Test_MacroSpeedup_IdempotentPush()
+  Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
+  Dim StepState As String
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_IdempotentPush"
+  Debug.Print String(80, "-")
+
+  SnapshotState BaseSU, BaseCalc, BaseEv, BaseAl, BaseCur
+
+  ' Use DisplayAlerts for clarity
+  MacroSpeedup msPush, msDisplayAlerts    ' push 1
+  MacroSpeedup msPush, msDisplayAlerts    ' push 2
+  MacroSpeedup msPush, msDisplayAlerts    ' push 3
+
+  ' While stacked, value is forced False
+  PPResult "Idem.Push3.AlertsFast", "False", BStr(Application.DisplayAlerts)
+
+  ' Pop once -> still False (prior layer had False)
+  MacroSpeedup msPop, msDisplayAlerts
+  PPResult "Idem.Pop1.AlertsStillFast", "False", BStr(Application.DisplayAlerts)
+
+  ' Pop twice -> still False (prior layer had False)
+  MacroSpeedup msPop, msDisplayAlerts
+  PPResult "Idem.Pop2.AlertsStillFast", "False", BStr(Application.DisplayAlerts)
+
+  ' Pop third -> baseline restored
+  MacroSpeedup msPop, msDisplayAlerts
+  PPResult "Idem.Pop3.AlertsBaseline", BStr(BaseAl), BStr(Application.DisplayAlerts)
+
+  ' Safety: Clear should now be a no-op on Alerts
+  MacroSpeedup msClear
+  PPResult "Idem.Clear.Baseline.Alerts", BStr(BaseAl), BStr(Application.DisplayAlerts)
+  PPResult "Idem.Clear.Baseline.ScreenUpdating", BStr(BaseSU), BStr(Application.ScreenUpdating)
+  PPResult "Idem.Clear.Baseline.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
+  PPResult "Idem.Clear.Baseline.EnableEvents", BStr(BaseEv), BStr(Application.EnableEvents)
+  PPResult "Idem.Clear.Baseline.Cursor", CursorStr(BaseCur), CursorStr(Application.Cursor)
+
+  Debug.Print String(80, "-")
+End Sub
+
+' Test F: Mid-scope override ï¿½ Events pushed False, temporarily set True, pop -> expect False, then Clear -> baseline
+Private Sub Test_MacroSpeedup_MidScopeOverride()
+  Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_MidScopeOverride"
+  Debug.Print String(80, "-")
+
+  SnapshotState BaseSU, BaseCalc, BaseEv, BaseAl, BaseCur
+
+  MacroSpeedup msInit                    ' all fast (Events=False)
+  MacroSpeedup msPush, msEnableEvents    ' push another layer for Events
+
+  ' Temporary override inside routine
+  Application.EnableEvents = True
+  PPResult "Override.Events.TempTrue", "True", BStr(Application.EnableEvents)
+
+  ' Pop should restore to fast (False), not baseline
+  MacroSpeedup msPop, msEnableEvents
+  PPResult "Override.Events.RestoredToFast", "False", BStr(Application.EnableEvents)
+
+  ' Finalize
+  MacroSpeedup msClear
+  PPResult "Override.Clear.ScreenUpdating", BStr(BaseSU), BStr(Application.ScreenUpdating)
+  PPResult "Override.Clear.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
+  PPResult "Override.Clear.EnableEvents", BStr(BaseEv), BStr(Application.EnableEvents)
+  PPResult "Override.Clear.DisplayAlerts", BStr(BaseAl), BStr(Application.DisplayAlerts)
+  PPResult "Override.Clear.Cursor", CursorStr(BaseCur), CursorStr(Application.Cursor)
+
+  Debug.Print String(80, "-")
+End Sub
+
+' Test G: Error-path finalizer ï¿½ simulate error after pushes, ensure Clear restores baseline in handler
+Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
+  Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
+
+  Debug.Print String(80, "-")
+  Debug.Print "Test_MacroSpeedup_ErrorPathFinalizer"
+  Debug.Print String(80, "-")
+
+  SnapshotState BaseSU, BaseCalc, BaseEv, BaseAl, BaseCur
+
+  On Error GoTo OnError
+
+  ' Push a mix of items, leave some unpopped
+  MacroSpeedup msPush, msScreenUpdating
+  MacroSpeedup msPush, msCalculation
+  MacroSpeedup msPush, msDisplayAlerts
+  MacroSpeedup msPush, msCursor
+
+  ' Simulate an error mid-routine
+  err.Raise 12345, "Test_MacroSpeedup_ErrorPathFinalizer", "Simulated error for test"
+
+  ' (unreached)
+  Debug.Print "ERROR: test did not raise as expected."
+  GoTo AfterErr
+
+OnError:
+  ' Finalizer path ï¿½ ensure everything is unwound
+  MacroSpeedup msClear
+
+  ' Asserts: baseline restored
+  PPResult "ErrorPath.Restore.ScreenUpdating", BStr(BaseSU), BStr(Application.ScreenUpdating)
+  PPResult "ErrorPath.Restore.Calculation", CalcStr(BaseCalc), CalcStr(Application.Calculation)
+  PPResult "ErrorPath.Restore.EnableEvents", BStr(BaseEv), BStr(Application.EnableEvents)
+  PPResult "ErrorPath.Restore.DisplayAlerts", BStr(BaseAl), BStr(Application.DisplayAlerts)
+  PPResult "ErrorPath.Restore.Cursor", CursorStr(BaseCur), CursorStr(Application.Cursor)
+
+AfterErr:
+  On Error GoTo 0
+  Debug.Print String(80, "-")
+End Sub
+

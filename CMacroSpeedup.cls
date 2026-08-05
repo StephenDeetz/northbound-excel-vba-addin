@@ -80,77 +80,77 @@ End Sub
 
 ' ===== Push/Pop per item (idempotent sets) =====
 Private Sub PushScreenUpdating()
-  Dim Prev As Boolean
-  Prev = Application.ScreenUpdating
-  StkScreenUpdating.Push Prev
-  If Prev <> False Then Application.ScreenUpdating = False
+  Dim TmpPrev As Boolean
+  TmpPrev = Application.ScreenUpdating
+  StkScreenUpdating.Push TmpPrev
+  If TmpPrev <> False Then Application.ScreenUpdating = False
 End Sub
 
 Private Sub PopScreenUpdating()
-  Dim Prev As Variant
-  Prev = StkScreenUpdating.Pop
-  If Not IsNull(Prev) Then
-    If Application.ScreenUpdating <> CBool(Prev) Then Application.ScreenUpdating = CBool(Prev)
+  Dim TmpPrev As Variant
+  TmpPrev = StkScreenUpdating.Pop
+  If Not IsNull(TmpPrev) Then
+    If Application.ScreenUpdating <> CBool(TmpPrev) Then Application.ScreenUpdating = CBool(TmpPrev)
   End If
 End Sub
 
 Private Sub PushCalculation()
-  Dim Prev As Long
-  Prev = Application.Calculation
-  StkCalculation.Push Prev
-  If Prev <> xlCalculationManual Then Application.Calculation = xlCalculationManual
+  Dim TmpPrev As Long
+  TmpPrev = Application.Calculation
+  StkCalculation.Push TmpPrev
+  If TmpPrev <> xlCalculationManual Then Application.Calculation = xlCalculationManual
 End Sub
 
 Private Sub PopCalculation()
-  Dim Prev As Variant
-  Prev = StkCalculation.Pop
-  If Not IsNull(Prev) Then
-    If Application.Calculation <> CLng(Prev) Then Application.Calculation = CLng(Prev)
+  Dim TmpPrev As Variant
+  TmpPrev = StkCalculation.Pop
+  If Not IsNull(TmpPrev) Then
+    If Application.Calculation <> CLng(TmpPrev) Then Application.Calculation = CLng(TmpPrev)
   End If
 End Sub
 
 Private Sub PushEnableEvents()
-  Dim Prev As Boolean
-  Prev = Application.EnableEvents
-  StkEnableEvents.Push Prev
-  If Prev <> False Then Application.EnableEvents = False
+  Dim TmpPrev As Boolean
+  TmpPrev = Application.EnableEvents
+  StkEnableEvents.Push TmpPrev
+  If TmpPrev <> False Then Application.EnableEvents = False
 End Sub
 
 Private Sub PopEnableEvents()
-  Dim Prev As Variant
-  Prev = StkEnableEvents.Pop
-  If Not IsNull(Prev) Then
-    If Application.EnableEvents <> CBool(Prev) Then Application.EnableEvents = CBool(Prev)
+  Dim TmpPrev As Variant
+  TmpPrev = StkEnableEvents.Pop
+  If Not IsNull(TmpPrev) Then
+    If Application.EnableEvents <> CBool(TmpPrev) Then Application.EnableEvents = CBool(TmpPrev)
   End If
 End Sub
 
 Private Sub PushDisplayAlerts()
-  Dim Prev As Boolean
-  Prev = Application.DisplayAlerts
-  StkDisplayAlerts.Push Prev
-  If Prev <> False Then Application.DisplayAlerts = False
+  Dim TmpPrev As Boolean
+  TmpPrev = Application.DisplayAlerts
+  StkDisplayAlerts.Push TmpPrev
+  If TmpPrev <> False Then Application.DisplayAlerts = False
 End Sub
 
 Private Sub PopDisplayAlerts()
-  Dim Prev As Variant
-  Prev = StkDisplayAlerts.Pop
-  If Not IsNull(Prev) Then
-    If Application.DisplayAlerts <> CBool(Prev) Then Application.DisplayAlerts = CBool(Prev)
+  Dim TmpPrev As Variant
+  TmpPrev = StkDisplayAlerts.Pop
+  If Not IsNull(TmpPrev) Then
+    If Application.DisplayAlerts <> CBool(TmpPrev) Then Application.DisplayAlerts = CBool(TmpPrev)
   End If
 End Sub
 
 Private Sub PushCursorWait()
-  Dim Prev As Long
-  Prev = Application.Cursor
-  StkCursor.Push Prev
-  If Prev <> xlWait Then Application.Cursor = xlWait
+  Dim TmpPrev As Long
+  TmpPrev = Application.Cursor
+  StkCursor.Push TmpPrev
+  If TmpPrev <> xlWait Then Application.Cursor = xlWait
 End Sub
 
 Private Sub PopCursor()
-  Dim Prev As Variant
-  Prev = StkCursor.Pop
-  If Not IsNull(Prev) Then
-    If Application.Cursor <> CLng(Prev) Then Application.Cursor = CLng(Prev)
+  Dim TmpPrev As Variant
+  TmpPrev = StkCursor.Pop
+  If Not IsNull(TmpPrev) Then
+    If Application.Cursor <> CLng(TmpPrev) Then Application.Cursor = CLng(TmpPrev)
   End If
 End Sub
 

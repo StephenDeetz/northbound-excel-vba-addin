@@ -114,8 +114,8 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
   Dim TmpInBrackets        As Boolean
   Dim TmpBracketCnt        As Long
 
-  Dim MultiOps             As Variant
-  Dim SingleOps            As Variant
+  Dim TmpMultiOps          As Variant
+  Dim TmpSingleOps         As Variant
 
   ' Keep the leading "=" if present
   If Len(AStr) > 0 Then
@@ -128,8 +128,8 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
   End If
 
   ' Define operator lists
-  MultiOps = Array("<=", ">=", "<>", "--") '".:", ":.") ' ".:."
-  SingleOps = Array("+", "-", "*", "/", "^", "&", "=", "<", ">")
+  TmpMultiOps = Array("<=", ">=", "<>", "--") '".:", ":.") ' ".:."
+  TmpSingleOps = Array("+", "-", "*", "/", "^", "&", "=", "<", ">")
 
   ' Loop through formula
   Do While TmpCnt <= Len(AStr)
@@ -152,7 +152,7 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
 
     Else
       ' Check for multi-character operators first
-      If IsOperator(TmpNextTwo, MultiOps) Then
+      If IsOperator(TmpNextTwo, TmpMultiOps) Then
         If TmpNextTwo = "--" Then
           If IsUnaryMinusContext(TmpStr) Then
             TmpStr = TmpStr & TmpNextTwo
@@ -169,7 +169,7 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
       End If
 
       ' Single-character operators
-      If IsOperator(TmpChar, SingleOps) Then
+      If IsOperator(TmpChar, TmpSingleOps) Then
         ' **Only add spaces if NOT inside brackets**
         If Not TmpInBrackets Then
           If TmpChar = "-" And IsUnaryMinusContext(TmpStr) Then

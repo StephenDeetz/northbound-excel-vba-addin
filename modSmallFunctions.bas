@@ -264,7 +264,7 @@ Public Function SpecialCellsSafe(ByVal ARng As Range, _
   If ARng Is Nothing Then Exit Function
 
   'Error triggered when no cells found, so don't log error.
-  On Error GoTo ErrHandler
+  On Error GoTo OnError
   If IsMissing(AValue) Then
     Set SpecialCellsSafe = ARng.SpecialCells(ACellType)
   Else
@@ -275,7 +275,7 @@ Public Function SpecialCellsSafe(ByVal ARng As Range, _
 Finally:
 
   Exit Function
-ErrHandler:
+OnError:
   err.Clear
   Resume Finally
 
@@ -301,20 +301,6 @@ OnError:
   Debug.Print "SpecialCellsSafeTest: " + CStr(err.Number) + err.Description
   GoTo Finally
 End Sub
-
-Public Function WorkbookProtectedWarning(ByRef AWkBook As Workbook, Optional AShowWarning As Boolean = True) As Boolean
-  WorkbookProtectedWarning = False
-  
-  If AWkBook.ProtectStructure Then
-    WorkbookProtectedWarning = True
-    
-    If AShowWarning Then
-      MsgBox "This Workbook has a Protected Structure." + vbCrLf + vbCrLf + _
-             "Please Unprotect the Workbook Before Continuing."
-    End If
-  End If
-
-End Function
 
 Public Function AnySheetsProtected(ByVal AWkBook As Workbook) As Boolean
   Dim TmpWorksheet As Worksheet

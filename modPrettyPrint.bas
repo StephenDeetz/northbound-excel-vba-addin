@@ -652,7 +652,7 @@ Private Function CellSetFormula2Safe(ByVal ACell As Range, ByVal AFrmStr As Stri
   Application.DisplayAlerts = False
   
   'Set Error Handling
-  On Error GoTo Err_Label
+  On Error GoTo OnError
   
   'Set to General Format to Prevent Format from Changing to Text.
   'Quick Note: If NumberFormat is Text, resetting Formula2 cause the formula to show as text.
@@ -677,7 +677,7 @@ Finally:
   Application.DisplayAlerts = True
 
   Exit Function
-Err_Label:
+OnError:
 
   Debug.Print "--------------- CellSetFormula2Safe Error ---------------------" & vbCrLf
   Debug.Print "Error " & err.Number & ": " & err.Description
