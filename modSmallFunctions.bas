@@ -314,3 +314,47 @@ Public Function AnySheetsProtected(ByVal AWkBook As Workbook) As Boolean
     End If
   Next TmpWorksheet
 End Function
+
+Function GetFolder(AStartFolderStr As String, Optional ByVal ATitleStr As Variant) As String
+    Dim Fldr As FileDialog
+    Dim sItem As String
+    Set Fldr = Application.FileDialog(msoFileDialogFolderPicker)
+    With Fldr
+        If IsMissing(ATitleStr) Then
+            .Title = "Select a Folder"
+        Else
+            .Title = ATitleStr
+        End If
+        
+        .AllowMultiSelect = False
+
+        If (AStartFolderStr <> vbNullString) And DirExists(AStartFolderStr) Then
+          If Right(AStartFolderStr, 1) = "\" Then
+            AStartFolderStr = Left(AStartFolderStr, Len(AStartFolderStr) - 1)
+          End If
+          .InitialFileName = AStartFolderStr & "\"
+        Else
+          .InitialFileName = Application.DefaultFilePath & "\"
+        End If
+
+        If .Show <> -1 Then GoTo NextCode
+        sItem = .SelectedItems(1)
+    End With
+NextCode:
+    GetFolder = sItem
+    Set Fldr = Nothing
+End Function
+
+
+Public Sub OpenPathInExplorer(ByVal APathStr As String)
+  Dim TmpStr As String
+  
+  If APathStr = vbNullString Then
+    MsgBox "Path Not Provided.", vbExclamation
+    Exit Sub
+  End If
+  
+  TmpStr = "Explorer.exe " & """" & APathStr & """"
+  
+  Shell TmpStr, vbNormalFocus
+End Sub
