@@ -466,3 +466,4 @@ Public Sub OpenPathInExplorer(ByVal APathStr As String)
   
   Shell TmpStr, vbNormalFocus
 End Sub
+

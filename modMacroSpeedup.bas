@@ -467,7 +467,7 @@ Private Sub Test_MacroSpeedup_MidScopeOverride()
   Debug.Print String(80, "-")
 End Sub
 
-' Test G: Error-path finalizer � simulate error after pushes, ensure Clear restores baseline in handler
+' Test G: Error-path finalizer simulate error after pushes, ensure Clear restores baseline in handler
 Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
   Dim BaseSU As Boolean, BaseCalc As XlCalculation, BaseEv As Boolean, BaseAl As Boolean, BaseCur As XlMousePointer
 
@@ -493,7 +493,7 @@ Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
   GoTo AfterErr
 
 OnError:
-  ' Finalizer path � ensure everything is unwound
+  ' Finalizer path ensure everything is unwound
   MacroSpeedup msClear
 
   ' Asserts: baseline restored
@@ -507,5 +507,6 @@ AfterErr:
   On Error GoTo 0
   Debug.Print String(80, "-")
 End Sub
+
 
 
