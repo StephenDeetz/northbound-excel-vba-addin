@@ -158,7 +158,21 @@ Private Sub ImportOneModule(ByVal AWbk As Workbook, _
   End If
 
   Set TmpExisting = FindVBComp(AWbk, TmpNameStr)
-  If Not TmpExisting Is Nothing Then CloseModuleCodePane AWbk, TmpExisting
+
+  If Not TmpExisting Is Nothing Then
+    CloseModuleCodePane AWbk, TmpExisting
+    ' Blank the destination BEFORE importing. Public Enum members are
+    ' project-global (unlike Sub/Function names, they can't be qualified by
+    ' module), so if the incoming file declares one, importing it while the
+    ' existing module still has its copy creates an instant "Ambiguous name
+    ' detected" COMPILE error -- which On Error cannot catch, since the code
+    ' never gets to run. Clearing the destination first means only one copy
+    ' of any such symbol ever exists at a time.
+    If TmpExisting.CodeModule.CountOfLines > 0 Then
+      TmpExisting.CodeModule.DeleteLines 1, TmpExisting.CodeModule.CountOfLines
+    End If
+  End If
+
   Set TmpImported = AWbk.VBProject.VBComponents.Import(AFilePathStr)
 
   If TmpExisting Is Nothing Then
@@ -166,8 +180,9 @@ Private Sub ImportOneModule(ByVal AWbk As Workbook, _
     Exit Sub
   End If
 
-  ' Existing module: VBE renamed the import to TmpNameStr & "1".
-  ' Transfer code using the safe blank-source-first sequence, then remove temp.
+  ' Existing module: VBE renamed the import to TmpNameStr & "1", and the
+  ' destination is already blank (above). Transfer the code across, then
+  ' remove the now-empty temp module.
   TransferCodeModule TmpImported.CodeModule, TmpExisting.CodeModule
 
   On Error Resume Next
