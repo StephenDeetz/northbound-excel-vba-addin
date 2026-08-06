@@ -117,6 +117,16 @@ Public Sub RunAllTests()
   RunOneTest "TestShtNameRequiresSingleQuotes"
   RunOneTest "TestShtFormulaNameStr"
 
+  ' modMacroSpeedup.bas
+  RunOneTest "TestMacroSpeedup"
+  RunOneTest "Test_MacroSpeedup_AllItemsPushPop"
+  RunOneTest "Test_MacroSpeedup_NestedDepth"
+  RunOneTest "Test_MacroSpeedup_ManualBaseline"
+  RunOneTest "Test_MacroSpeedup_Interleaved"
+  RunOneTest "Test_MacroSpeedup_IdempotentPush"
+  RunOneTest "Test_MacroSpeedup_MidScopeOverride"
+  RunOneTest "Test_MacroSpeedup_ErrorPathFinalizer"
+
   ' modAddOperatorWhiteSpace.bas
   RunOneTest "TestIsMultiOperator"
   RunOneTest "TestIsSingleOperator"

@@ -150,7 +150,7 @@ Private Sub PPResult(ByVal ACase As String, _
                      ByVal AActual As String)
   Dim TmpPassFailStr As String
   TmpPassFailStr = IIf(StrComp(AExpected, AActual, vbBinaryCompare) = 0, "PASS", "FAIL")
-  Debug.Print ACase & " | Expected: " & AExpected & " | Actual: " & AActual & " | " & TmpPassFailStr
+  TestLogLine ACase & " | " & AActual & " | " & AExpected & " | " & TmpPassFailStr
 End Sub
 
 ' Helpers to stringify the properties we test
@@ -202,14 +202,11 @@ Private Sub TestMacroSpeedup()
   Dim TmpPrePushCalculation     As XlCalculation
   Dim TmpPrePushDisplayAlerts   As Boolean
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test: MacroSpeedup -- Compare Actual vs Expected"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   ' 1) Capture baseline
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
-  Debug.Print "Baseline captured."
 
   ' 2) Init (push-all) ? expect fast values
   MacroSpeedup msInit
@@ -262,9 +259,14 @@ Private Sub TestMacroSpeedup()
   PPResult "PopEmpty.DisplayAlertsNoChange", BStr(TmpBaselineDisplayAlerts), BStr(Application.DisplayAlerts)
   PPResult "PopEmpty.CursorNoChange", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test complete."
-  Debug.Print String(80, "-")
+Finally:
+  Exit Sub
+
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: TestMacroSpeedup - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 ' ============================
@@ -279,9 +281,7 @@ Private Sub Test_MacroSpeedup_AllItemsPushPop()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_AllItemsPushPop"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
@@ -302,7 +302,14 @@ Private Sub Test_MacroSpeedup_AllItemsPushPop()
   PPResult "PopAll.DisplayAlertsRestored", BStr(TmpBaselineDisplayAlerts), BStr(Application.DisplayAlerts)
   PPResult "PopAll.CursorRestored", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-  Debug.Print String(80, "-")
+Finally:
+  Exit Sub
+
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: Test_MacroSpeedup_AllItemsPushPop - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 ' Test B: Deep nesting (multiple pushes each item)
@@ -313,9 +320,7 @@ Private Sub Test_MacroSpeedup_NestedDepth()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_NestedDepth"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
@@ -341,16 +346,21 @@ Private Sub Test_MacroSpeedup_NestedDepth()
   PPResult "NestedDepth.DisplayAlertsRestored", BStr(TmpBaselineDisplayAlerts), BStr(Application.DisplayAlerts)
   PPResult "NestedDepth.CursorRestored", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-  Debug.Print String(80, "-")
+Finally:
+  Exit Sub
+
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: Test_MacroSpeedup_NestedDepth - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 ' Test C: Respect user's Manual baseline
 Private Sub Test_MacroSpeedup_ManualBaseline()
   Dim TmpBaselineCalculation As XlCalculation
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_ManualBaseline"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   ' Force a non-default baseline deliberately
   TmpBaselineCalculation = Application.Calculation
@@ -361,10 +371,16 @@ Private Sub Test_MacroSpeedup_ManualBaseline()
 
   PPResult "ManualBaseline.Restored", "Manual", CalcStr(Application.Calculation)
 
+Finally:
   ' restore original baseline
   Application.Calculation = TmpBaselineCalculation
+  Exit Sub
 
-  Debug.Print String(80, "-")
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: Test_MacroSpeedup_ManualBaseline - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 ' Test D: Interleaved sequences + ClearAll as finalizer
@@ -375,9 +391,7 @@ Private Sub Test_MacroSpeedup_Interleaved()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_Interleaved"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
@@ -400,7 +414,14 @@ Private Sub Test_MacroSpeedup_Interleaved()
   PPResult "Interleaved.DisplayAlertsRestored", BStr(TmpBaselineDisplayAlerts), BStr(Application.DisplayAlerts)
   PPResult "Interleaved.CursorRestored", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-  Debug.Print String(80, "-")
+Finally:
+  Exit Sub
+
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: Test_MacroSpeedup_Interleaved - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 
@@ -416,9 +437,7 @@ Private Sub Test_MacroSpeedup_IdempotentPush()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_IdempotentPush"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
@@ -451,7 +470,14 @@ Private Sub Test_MacroSpeedup_IdempotentPush()
   PPResult "Idem.Clear.Baseline.EnableEvents", BStr(TmpBaselineEnableEvents), BStr(Application.EnableEvents)
   PPResult "Idem.Clear.Baseline.Cursor", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-  Debug.Print String(80, "-")
+Finally:
+  Exit Sub
+
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: Test_MacroSpeedup_IdempotentPush - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 ' Test F: Mid-scope override -- Events pushed False, temporarily set True, pop -> expect False, then Clear -> baseline
@@ -462,9 +488,7 @@ Private Sub Test_MacroSpeedup_MidScopeOverride()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_MidScopeOverride"
-  Debug.Print String(80, "-")
+  On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
@@ -488,7 +512,14 @@ Private Sub Test_MacroSpeedup_MidScopeOverride()
   PPResult "Override.Clear.DisplayAlerts", BStr(TmpBaselineDisplayAlerts), BStr(Application.DisplayAlerts)
   PPResult "Override.Clear.Cursor", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-  Debug.Print String(80, "-")
+Finally:
+  Exit Sub
+
+OnError:
+  MacroSpeedup msClear
+  TestLogLine "CRASHED: Test_MacroSpeedup_MidScopeOverride - " & err.Description
+  On Error GoTo 0
+  Resume Finally
 End Sub
 
 ' Test G: Error-path finalizer simulate error after pushes, ensure Clear restores baseline in handler
@@ -498,10 +529,6 @@ Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
   Dim TmpBaselineEnableEvents   As Boolean
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
-
-  Debug.Print String(80, "-")
-  Debug.Print "Test_MacroSpeedup_ErrorPathFinalizer"
-  Debug.Print String(80, "-")
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
@@ -518,8 +545,8 @@ Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
   err.Raise 12345, "Test_MacroSpeedup_ErrorPathFinalizer", "Simulated error for test"
 
   ' (unreached)
-  Debug.Print "ERROR: test did not raise as expected."
-  GoTo AfterErr
+  TestLogLine "Test_MacroSpeedup_ErrorPathFinalizer | did not raise as expected | - | FAIL"
+  GoTo Finally
 
 OnError:
   ' Finalizer path ensure everything is unwound
@@ -532,9 +559,8 @@ OnError:
   PPResult "ErrorPath.Restore.DisplayAlerts", BStr(TmpBaselineDisplayAlerts), BStr(Application.DisplayAlerts)
   PPResult "ErrorPath.Restore.Cursor", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
-AfterErr:
+Finally:
   On Error GoTo 0
-  Debug.Print String(80, "-")
 End Sub
 
 
