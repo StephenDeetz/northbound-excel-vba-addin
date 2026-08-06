@@ -4,26 +4,14 @@ Option Explicit
 Private Const kSimpleArgTextLen = 50
 Private Const kSimpleArgCnt = 4
 
-Private Const kLogFilePathStr As String = "C:\temp\temp.txt"
+Private Const kGoldenInputMarker As String = ">>>>INPUT>>>>"
+Private Const kGoldenExpectedMarker As String = ">>>>EXPECTED>>>>"
+Private Const kGoldenEndMarker As String = ">>>>END>>>>"
 
-
-'----------------------------------------------------------------------'
-'                       Test Log Functions                             '
-'----------------------------------------------------------------------'
-
-Private Sub LogClear()
-  If Dir$(kLogFilePathStr) <> vbNullString Then Kill kLogFilePathStr
-End Sub
-
-
-Private Sub LogWrite(ByVal AStr As String)
-  Dim TmpFileNbr As Integer
-
-  TmpFileNbr = FreeFile
-  Open kLogFilePathStr For Append As #TmpFileNbr
-    Print #TmpFileNbr, AStr
-  Close #TmpFileNbr
-End Sub
+Private mGoldenModeStr As String     ' vbNullString (plain log), "CAPTURE", or "COMPARE"
+Private mGoldenEntries As Collection ' COMPARE mode: Array(InputStr, ExpectedStr) per entry, in case order
+Private mGoldenIdx As Long           ' COMPARE mode: count of entries consumed so far
+Private mGoldenCaptureStr As String  ' CAPTURE mode: accumulated file content
 
 
 '----------------------------------------------------------------------'
@@ -361,11 +349,11 @@ Private Function PairArgPostProcess(ByVal AStr As String) As String
 End Function
 
 
-Private Sub TestPairArgPostProcess()
-  TestPrettyPrintHelper "=LET(a, 1, b, 2, a + b)"
-  TestPrettyPrintHelper "=IFS(A1 > 10, ""High"", A1 > 5, ""Mid"", TRUE, ""Low"")"
-  TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Other"")"
-  TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Default"")"
+Private Sub TestPairArgPostProcess(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestPrettyPrintHelper "=LET(a, 1, b, 2, a + b)", ATestFilePathStr
+  TestPrettyPrintHelper "=IFS(A1 > 10, ""High"", A1 > 5, ""Mid"", TRUE, ""Low"")", ATestFilePathStr
+  TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Other"")", ATestFilePathStr
+  TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Default"")", ATestFilePathStr
 End Sub
 
 
@@ -557,46 +545,46 @@ Private Function PrettyPrintWouldChangeFormula(ByVal AFrmStr As String) As Boole
 End Function
 
 
-Private Sub TestPrettyPrintWouldChangeFormulaHelper(ByVal AFrmStr As String, ByVal AExpectedBool As Boolean)
+Private Sub TestPrettyPrintWouldChangeFormulaHelper(ByVal AFrmStr As String, ByVal AExpectedBool As Boolean, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerBool As Boolean
   Dim TmpPassFailStr As String
 
   TmpAnswerBool = PrettyPrintWouldChangeFormula(AFrmStr)
   TmpPassFailStr = IIf(TmpAnswerBool = AExpectedBool, "PASS", "FAIL")
 
-  Debug.Print AFrmStr; " | "; TmpAnswerBool; " | "; AExpectedBool; " | "; TmpPassFailStr
+  TestLogLine AFrmStr & " | " & TmpAnswerBool & " | " & AExpectedBool & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestPrettyPrintWouldChangeFormula()
+Private Sub TestPrettyPrintWouldChangeFormula(Optional ByVal ATestFilePathStr As String = vbNullString)
   ' Simple formula: Pretty Print maps it to itself either way.
-  TestPrettyPrintWouldChangeFormulaHelper "=SUM(A1:A10)", False
+  TestPrettyPrintWouldChangeFormulaHelper "=SUM(A1:A10)", False, ATestFilePathStr
 
   ' Complex, still minified: Pretty Print would add line breaks.
-  TestPrettyPrintWouldChangeFormulaHelper "=IF(A1>0,SUM(A1:A10),0)", True
+  TestPrettyPrintWouldChangeFormulaHelper "=IF(A1>0,SUM(A1:A10),0)", True, ATestFilePathStr
 
   ' Complex, already pretty-printed: idempotent, nothing left to do.
-  TestPrettyPrintWouldChangeFormulaHelper PrettyPrint("=IF(A1>0,SUM(A1:A10),0)"), False
+  TestPrettyPrintWouldChangeFormulaHelper PrettyPrint("=IF(A1>0,SUM(A1:A10),0)"), False, ATestFilePathStr
 
   ' Array literal, already pretty-printed: must stay idempotent. {} content
   ' gets ", " after each real comma (Excel is fine with spaces there) but
   ' must never get a line break (Excel silently collapses those back to one
   ' line, which would otherwise make this loop forever).
   TestPrettyPrintWouldChangeFormulaHelper _
-    PrettyPrint("=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"), False
+    PrettyPrint("=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"), False, ATestFilePathStr
 End Sub
 
 
-Private Sub TestPrettyPrintExactHelper(ByVal AFrmStr As String, ByVal AExpectedStr As String)
+Private Sub TestPrettyPrintExactHelper(ByVal AFrmStr As String, ByVal AExpectedStr As String, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerStr As String
   Dim TmpPassFailStr As String
 
   TmpAnswerStr = PrettyPrint(AFrmStr)
   TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
 
-  Debug.Print AFrmStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+  TestLogLine AFrmStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestPrettyPrintExact()
+Private Sub TestPrettyPrintExact(Optional ByVal ATestFilePathStr As String = vbNullString)
   'An array literal inside a function's argument list must not inflate that
   'call's own comma count with the array's internal commas -- MATCH here has
   'only 2 real arguments (Data!E3 and 0, plus the array as a whole), so it
@@ -609,74 +597,286 @@ Private Sub TestPrettyPrintExact()
     "    ""Alpha""," & vbLf & _
     "    ""Beta""," & vbLf & _
     "    ""Gamma""" & vbLf & _
-    ")"
+    ")", ATestFilePathStr
 End Sub
 
 
-Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
-  LogWrite "-------------------------------------------------"
-  LogWrite AFrmStr
-  LogWrite PrettyPrint(AFrmStr)
+' -- Golden-file comparison ----------------------------------------------------
+'
+' RunPrettyPrintCases below has no stored "expected" value per case -- it just
+' logs Input/Answer for visual review (TestPrettyPrint) with no PASS/FAIL.
+' TestPrettyPrintGolden reruns the exact same case list but checks each Answer
+' against a recorded Expected value, so it can report real PASS/FAIL like
+' every other test wired into modTestRunner's RunAllTests.
+'
+' Recorded values live in PrettyPrintGolden.txt, a plain-text fixture meant to
+' be version-controlled alongside the code (see modTestRunner.
+' ResolveGoldenFilePathStr) -- so a change in expected output shows up in git
+' diff like any other intentional behavior change. TestPrettyPrintCaptureGolden
+' regenerates it from the current PrettyPrint output; run it deliberately,
+' after reviewing the output (e.g. via TestPrettyPrint), never automatically.
+'
+' Each case's Input/Expected is escaped to a single physical line (embedded
+' CR/LF -> {{CRLF}}/{{LF}}) so the file format is a fixed 5-line record and
+' reading it back needs no multi-line accumulation logic.
+'
+' (kGolden* consts and mGolden* module vars are declared in the Declarations
+' section at the top of this module -- VBA requires that; see the compile
+' error this caused when they were declared here instead.)
+
+Private Function GoldenEscapeStr(ByVal AStr As String) As String
+  GoldenEscapeStr = Replace(Replace(AStr, vbCrLf, "{{CRLF}}"), vbLf, "{{LF}}")
+End Function
+
+Private Function GoldenUnescapeStr(ByVal AStr As String) As String
+  GoldenUnescapeStr = Replace(Replace(AStr, "{{CRLF}}", vbCrLf), "{{LF}}", vbLf)
+End Function
+
+Private Sub GoldenWriteEntry(ByVal AInputStr As String, ByVal AExpectedStr As String)
+  mGoldenCaptureStr = mGoldenCaptureStr & _
+    kGoldenInputMarker & vbCrLf & GoldenEscapeStr(AInputStr) & vbCrLf & _
+    kGoldenExpectedMarker & vbCrLf & GoldenEscapeStr(AExpectedStr) & vbCrLf & _
+    kGoldenEndMarker & vbCrLf
 End Sub
 
+'Fixed 5-line records (input marker, input, expected marker, expected, end
+'marker) -- read literally, no state machine needed since escaping guarantees
+'each field is exactly one physical line.
+Private Function GoldenReadEntries(ByVal APathStr As String) As Collection
+  Dim TmpFileNbr As Integer
+  Dim TmpMarkerLine As String
+  Dim TmpInputStr As String
+  Dim TmpExpectedStr As String
 
-Private Sub TestPrettyPrint()
-  Dim TmpStr As String
+  Set GoldenReadEntries = New Collection
+  If Dir$(APathStr) = vbNullString Then Exit Function
 
+  TmpFileNbr = FreeFile
+  Open APathStr For Input As #TmpFileNbr
+  Do Until EOF(TmpFileNbr)
+    Line Input #TmpFileNbr, TmpMarkerLine
+    If TmpMarkerLine = kGoldenInputMarker Then
+      Line Input #TmpFileNbr, TmpInputStr
+      Line Input #TmpFileNbr, TmpMarkerLine 'expected marker, unused
+      Line Input #TmpFileNbr, TmpExpectedStr
+      Line Input #TmpFileNbr, TmpMarkerLine 'end marker, unused
+      GoldenReadEntries.Add Array(GoldenUnescapeStr(TmpInputStr), GoldenUnescapeStr(TmpExpectedStr))
+    End If
+  Loop
+  Close #TmpFileNbr
+End Function
+
+Private Sub TestGoldenEscapeStrHelper(ByVal AStr As String, ByVal AExpectedEscapedStr As String, Optional ByVal ATestFilePathStr As String = vbNullString)
+  Dim TmpEscapedStr As String
+  Dim TmpRoundTripStr As String
+  Dim TmpPassFailStr As String
+
+  TmpEscapedStr = GoldenEscapeStr(AStr)
+  TmpRoundTripStr = GoldenUnescapeStr(TmpEscapedStr)
+  TmpPassFailStr = IIf(TmpEscapedStr = AExpectedEscapedStr And TmpRoundTripStr = AStr, "PASS", "FAIL")
+
+  TestLogLine TmpEscapedStr & " | " & AExpectedEscapedStr & " | " & TmpPassFailStr, ATestFilePathStr
+End Sub
+
+Private Sub TestGoldenEscapeStr(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestGoldenEscapeStrHelper "=SUM(A1:A10)", "=SUM(A1:A10)", ATestFilePathStr
+  TestGoldenEscapeStrHelper "=CHOOSE(" & vbLf & "    A1)", "=CHOOSE({{LF}}    A1)", ATestFilePathStr
+  TestGoldenEscapeStrHelper "=A1" & vbCrLf & vbCrLf, "=A1{{CRLF}}{{CRLF}}", ATestFilePathStr
+End Sub
+
+'Hand-builds a 2-record golden file (mirroring GoldenWriteEntry's format) and
+'checks GoldenReadEntries parses both records, including one whose fields
+'contain escaped CRLF/LF sequences, back to their original unescaped values.
+Private Sub TestGoldenReadEntries(Optional ByVal ATestFilePathStr As String = vbNullString)
+  Dim TmpPathStr As String
+  Dim TmpFileNbr As Integer
+  Dim TmpEntries As Collection
+  Dim TmpEntry1 As Variant
+  Dim TmpEntry2 As Variant
+  Dim TmpPassFailStr As String
+
+  TmpPathStr = Environ$("TEMP") & "\NBPub_GoldenReadEntriesTest.txt"
+
+  TmpFileNbr = FreeFile
+  Open TmpPathStr For Output As #TmpFileNbr
+  Print #TmpFileNbr, ">>>>INPUT>>>>"
+  Print #TmpFileNbr, "=SUM(A1:A10)"
+  Print #TmpFileNbr, ">>>>EXPECTED>>>>"
+  Print #TmpFileNbr, "=SUM(A1:A10)"
+  Print #TmpFileNbr, ">>>>END>>>>"
+  Print #TmpFileNbr, ">>>>INPUT>>>>"
+  Print #TmpFileNbr, "=A1{{CRLF}}{{CRLF}}"
+  Print #TmpFileNbr, ">>>>EXPECTED>>>>"
+  Print #TmpFileNbr, "=A1{{LF}}{{LF}}"
+  Print #TmpFileNbr, ">>>>END>>>>"
+  Close #TmpFileNbr
+
+  Set TmpEntries = GoldenReadEntries(TmpPathStr)
+  Kill TmpPathStr
+
+  TmpPassFailStr = "PASS"
+  If TmpEntries.Count <> 2 Then TmpPassFailStr = "FAIL"
+  If TmpPassFailStr = "PASS" Then
+    TmpEntry1 = TmpEntries(1)
+    TmpEntry2 = TmpEntries(2)
+    If TmpEntry1(0) <> "=SUM(A1:A10)" Then TmpPassFailStr = "FAIL"
+    If TmpEntry1(1) <> "=SUM(A1:A10)" Then TmpPassFailStr = "FAIL"
+    If TmpEntry2(0) <> "=A1" & vbCrLf & vbCrLf Then TmpPassFailStr = "FAIL"
+    If TmpEntry2(1) <> "=A1" & vbLf & vbLf Then TmpPassFailStr = "FAIL"
+  End If
+
+  TestLogLine "GoldenReadEntries 2-record parse | " & TmpPassFailStr, ATestFilePathStr
+End Sub
+
+Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String, Optional ByVal ATestFilePathStr As String = vbNullString)
+  Dim TmpAnswerStr As String
+  Dim TmpEntry As Variant
+  Dim TmpExpectedStr As String
+  Dim TmpNoteStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = PrettyPrint(AFrmStr)
+
+  Select Case mGoldenModeStr
+    Case "CAPTURE"
+      GoldenWriteEntry AFrmStr, TmpAnswerStr
+
+    Case "COMPARE"
+      mGoldenIdx = mGoldenIdx + 1
+      If mGoldenIdx > mGoldenEntries.Count Then
+        TestLogLine AFrmStr & " | " & TmpAnswerStr & " | (no golden entry -- run TestPrettyPrintCaptureGolden) | FAIL", ATestFilePathStr
+        Exit Sub
+      End If
+
+      TmpEntry = mGoldenEntries(mGoldenIdx)
+      TmpExpectedStr = TmpEntry(1)
+
+      TmpNoteStr = vbNullString
+      If CStr(TmpEntry(0)) <> AFrmStr Then TmpNoteStr = " [GOLDEN INPUT MISMATCH -- recapture]"
+
+      TmpPassFailStr = IIf(TmpAnswerStr = TmpExpectedStr, "PASS", "FAIL")
+      TestLogLine AFrmStr & " | " & TmpAnswerStr & " | " & TmpExpectedStr & " | " & TmpPassFailStr & TmpNoteStr, ATestFilePathStr
+
+    Case Else
+      TestLogLine "-------------------------------------------------", ATestFilePathStr
+      TestLogLine AFrmStr, ATestFilePathStr
+      TestLogLine TmpAnswerStr, ATestFilePathStr
+  End Select
+End Sub
+
+'Regenerates PrettyPrintGolden.txt from the current PrettyPrint output for
+'every case in RunPrettyPrintCases. Run deliberately, after reviewing the
+'actual output (e.g. via TestPrettyPrint) -- this overwrites the fixture that
+'TestPrettyPrintGolden checks future changes against.
+Public Sub TestPrettyPrintCaptureGolden()
+  Dim TmpPathStr As String
+  Dim TmpFileNbr As Integer
+
+  TmpPathStr = ResolveGoldenFilePathStr()
+  If LenB(TmpPathStr) = 0 Then Exit Sub
+
+  If MsgBox("This overwrites the golden file used to catch Pretty Print regressions:" & vbCrLf & _
+            TmpPathStr & vbCrLf & vbCrLf & _
+            "Only continue if you've reviewed the current output (e.g. via TestPrettyPrint) and it's correct.", _
+            vbOKCancel Or vbExclamation, "Capture Pretty Print Golden") <> vbOK Then Exit Sub
+
+  mGoldenModeStr = "CAPTURE"
+  mGoldenCaptureStr = vbNullString
+
+  RunPrettyPrintCases
+
+  TmpFileNbr = FreeFile
+  Open TmpPathStr For Output As #TmpFileNbr
+  Print #TmpFileNbr, mGoldenCaptureStr
+  Close #TmpFileNbr
+
+  mGoldenModeStr = vbNullString
+  MsgBox "Golden file captured:" & vbCrLf & TmpPathStr, vbInformation
+End Sub
+
+'Same case list as TestPrettyPrint, but checked against PrettyPrintGolden.txt
+'for real PASS/FAIL -- this is the one wired into RunAllTests.
+Public Sub TestPrettyPrintGolden(Optional ByVal ATestFilePathStr As String = vbNullString)
+  Dim TmpPathStr As String
+
+  TmpPathStr = ResolveGoldenFilePathStr()
+
+  mGoldenModeStr = "COMPARE"
+  Set mGoldenEntries = GoldenReadEntries(TmpPathStr)
+  mGoldenIdx = 0
+
+  If mGoldenEntries.Count = 0 Then
+    TestLogLine "NO GOLDEN FILE FOUND -- run TestPrettyPrintCaptureGolden first | FAIL", ATestFilePathStr
+    mGoldenModeStr = vbNullString
+    Exit Sub
+  End If
+
+  RunPrettyPrintCases ATestFilePathStr
+
+  If mGoldenIdx < mGoldenEntries.Count Then
+    TestLogLine CStr(mGoldenEntries.Count - mGoldenIdx) & " unused golden entries -- recapture after removing test cases | FAIL", ATestFilePathStr
+  End If
+
+  mGoldenModeStr = vbNullString
+End Sub
+
+Public Sub TestPrettyPrint(Optional ByVal ATestFilePathStr As String = vbNullString)
   ClearImmediateWindow
-  LogClear
+  RunPrettyPrintCases ATestFilePathStr
+End Sub
 
-  TestPrettyPrintHelper "=IF(A1>0, SUM((A1:B1) + (C1:D1)), ""Test,,"")" & vbCrLf & vbCrLf
+Private Sub RunPrettyPrintCases(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestPrettyPrintHelper "=IF(A1>0, SUM((A1:B1) + (C1:D1)), ""Test,,"")" & vbCrLf & vbCrLf, ATestFilePathStr
 
-  TestPrettyPrintHelper "=CONCAT(""Hello """"World,"""""",""End"")"
+  TestPrettyPrintHelper "=CONCAT(""Hello """"World,"""""",""End"")", ATestFilePathStr
 
-  TestPrettyPrintHelper "=IF(TRIM([@[UTC Offset]])<>"""", $B$2 + ([@[UTC Offset]]/24), """")"
-  TestPrettyPrintHelper "=IF(TRUE,IF(A1=1,B1+C1,D1),FALSE)"
+  TestPrettyPrintHelper "=IF(TRIM([@[UTC Offset]])<>"""", $B$2 + ([@[UTC Offset]]/24), """")", ATestFilePathStr
+  TestPrettyPrintHelper "=IF(TRUE,IF(A1=1,B1+C1,D1),FALSE)", ATestFilePathStr
 
-  TestPrettyPrintHelper "=LAMBDA(Char,CharStatus,Guess,GameArr,CharStatusArr,SUM(MAKEARRAY(1,5,LAMBDA(r,C,IF(AND(INDEX(GameArr,r,C)=Char,INDEX(CharStatusArr,r,C)<>""Not in Word""),1,0)))))(Game!D5,D5,$AP5,Game!$B5:$F5,Interpret!$B5:$F5)"
+  TestPrettyPrintHelper "=LAMBDA(Char,CharStatus,Guess,GameArr,CharStatusArr,SUM(MAKEARRAY(1,5,LAMBDA(r,C,IF(AND(INDEX(GameArr,r,C)=Char,INDEX(CharStatusArr,r,C)<>""Not in Word""),1,0)))))(Game!D5,D5,$AP5,Game!$B5:$F5,Interpret!$B5:$F5)", ATestFilePathStr
 
-  TestPrettyPrintHelper "=IFERROR(IF($H18<>"""",XLOOKUP($H18,'Client Forecast'!$K:$K,'Client Forecast'!C:C),""""),"""")"
+  TestPrettyPrintHelper "=IFERROR(IF($H18<>"""",XLOOKUP($H18,'Client Forecast'!$K:$K,'Client Forecast'!C:C),""""),"""")", ATestFilePathStr
 
-  TestPrettyPrintHelper "=IF(TRIM($A2)<>"""",INDEX(TEXTSPLIT($A2,""|""),1,3),"""")"
-  TestPrettyPrintHelper "=@IF($AF2,IF($AJ2,IF($AP2>0,INDEX(CSV_Std_Translations,1,$AP2),""Blank""),IF(TRIM($C2)<>"""",$C2,""Blank"")),"""")"
-  TestPrettyPrintHelper "=IF(IFERROR(FIND("" - "",INDEX(TEXTSPLIT($A2,""|""),1,2)),0)>=0,INDEX(TEXTSPLIT($A2,""|""),1,2),"""")"
-  TestPrettyPrintHelper "=IF(A9,IF(K9<>0,TRIM(MID(B9,J9,FIND(K9,B9,J9)-J9)),MID(B9,J9,2)),"""")"
+  TestPrettyPrintHelper "=IF(TRIM($A2)<>"""",INDEX(TEXTSPLIT($A2,""|""),1,3),"""")", ATestFilePathStr
+  TestPrettyPrintHelper "=@IF($AF2,IF($AJ2,IF($AP2>0,INDEX(CSV_Std_Translations,1,$AP2),""Blank""),IF(TRIM($C2)<>"""",$C2,""Blank"")),"""")", ATestFilePathStr
+  TestPrettyPrintHelper "=IF(IFERROR(FIND("" - "",INDEX(TEXTSPLIT($A2,""|""),1,2)),0)>=0,INDEX(TEXTSPLIT($A2,""|""),1,2),"""")", ATestFilePathStr
+  TestPrettyPrintHelper "=IF(A9,IF(K9<>0,TRIM(MID(B9,J9,FIND(K9,B9,J9)-J9)),MID(B9,J9,2)),"""")", ATestFilePathStr
 
-  TestPrettyPrintHelper "=IF(A1<>"""", IF(B1>0, IF(C1=1, ""Valid"", ""Invalid""), ""Error""), ""Blank"")"
-  TestPrettyPrintHelper "=IF(A1 <> """", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")"
-  TestPrettyPrintHelper "=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)"
-  TestPrettyPrintHelper "=IF([@[Net Profit]] > 0, ""Profitable"", IF([@[Net Profit]] = 0, ""Break Even"", ""Loss""))"
-  TestPrettyPrintHelper "=INDIRECT(ADDRESS(A1, B1, 4))"
-  TestPrettyPrintHelper "=SUM(SEQUENCE(5, 1, A1, 1) * B1)"
-  TestPrettyPrintHelper "=LET(x, A1 + B1, y, x * 2, y - C1)"
+  TestPrettyPrintHelper "=IF(A1<>"""", IF(B1>0, IF(C1=1, ""Valid"", ""Invalid""), ""Error""), ""Blank"")", ATestFilePathStr
+  TestPrettyPrintHelper "=IF(A1 <> """", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")", ATestFilePathStr
+  TestPrettyPrintHelper "=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)", ATestFilePathStr
+  TestPrettyPrintHelper "=IF([@[Net Profit]] > 0, ""Profitable"", IF([@[Net Profit]] = 0, ""Break Even"", ""Loss""))", ATestFilePathStr
+  TestPrettyPrintHelper "=INDIRECT(ADDRESS(A1, B1, 4))", ATestFilePathStr
+  TestPrettyPrintHelper "=SUM(SEQUENCE(5, 1, A1, 1) * B1)", ATestFilePathStr
+  TestPrettyPrintHelper "=LET(x, A1 + B1, y, x * 2, y - C1)", ATestFilePathStr
 
-  TestPrettyPrintHelper "=CHOOSE(A1, 10, 20, ""Text Value"", ""Another Text"")"
-  TestPrettyPrintHelper "=IF(AND([@[% In]],[@[Votes In]]),[@[Rep Need]]/[@[VL-3VL]],0)"
+  TestPrettyPrintHelper "=CHOOSE(A1, 10, 20, ""Text Value"", ""Another Text"")", ATestFilePathStr
+  TestPrettyPrintHelper "=IF(AND([@[% In]],[@[Votes In]]),[@[Rep Need]]/[@[VL-3VL]],0)", ATestFilePathStr
 
-  TestPrettyPrintHelper "=LAMBDA(Input,Cnt,Pos,Incl,IFS((Cnt+Pos)<0,""[]"",(Cnt+Pos)>=8,""[]"",NOT(Incl),""[""&MID(Input,(Pos+Cnt),(ABS(Cnt)))&""]"",TRUE,""[""&MID(Input,(Pos+Cnt+1),(ABS(Cnt)))&""]""))($N70,$P70,$Q70,$O70)"
+  TestPrettyPrintHelper "=LAMBDA(Input,Cnt,Pos,Incl,IFS((Cnt+Pos)<0,""[]"",(Cnt+Pos)>=8,""[]"",NOT(Incl),""[""&MID(Input,(Pos+Cnt),(ABS(Cnt)))&""]"",TRUE,""[""&MID(Input,(Pos+Cnt+1),(ABS(Cnt)))&""]""))($N70,$P70,$Q70,$O70)", ATestFilePathStr
 
-  TestPrettyPrintHelper "=LET(x, ((A1+B1)), y, IF(x>0, LET(u, x*2, v, u+3, v), ((x))), y)"
-  TestPrettyPrintHelper "=LET(x, (A1 + B1) * ((C1 + D1)), y, LET(u, x + 1, v, u * 3, v), y + ((x)))"
-  TestPrettyPrintHelper "=LET(x, A1 + (B1 + (C1)), y, x * 2, y - ((C1)))"
+  TestPrettyPrintHelper "=LET(x, ((A1+B1)), y, IF(x>0, LET(u, x*2, v, u+3, v), ((x))), y)", ATestFilePathStr
+  TestPrettyPrintHelper "=LET(x, (A1 + B1) * ((C1 + D1)), y, LET(u, x + 1, v, u * 3, v), y + ((x)))", ATestFilePathStr
+  TestPrettyPrintHelper "=LET(x, A1 + (B1 + (C1)), y, x * 2, y - ((C1)))", ATestFilePathStr
 
-  TestPrettyPrintHelper "=IF([@Active]=FALSE,0,IFERROR(LET(Rid,[@Id],Keep,(tblRecipeBOM[Recipe Id]=Rid)*(1-((tblRecipeBOM[Item Type]=""Recipe"")*(tblRecipeBOM[Item Id]=Rid))),Qty,FILTER(tblRecipeBOM[Qty],Keep),Type,FILTER(tblRecipeBOM[Item Type],Keep),ID,FILTER(tblRecipeBOM[Item Id],Keep),val,SWITCH(Type,""Ingredient"",XLOOKUP(ID,tblIngredients[Id],tblIngredients[Calories],0),""Recipe"",XLOOKUP(ID,[Id],[Calories],0),0),ROUND(SUM(Qty*val),1)),""""))"
+  TestPrettyPrintHelper "=IF([@Active]=FALSE,0,IFERROR(LET(Rid,[@Id],Keep,(tblRecipeBOM[Recipe Id]=Rid)*(1-((tblRecipeBOM[Item Type]=""Recipe"")*(tblRecipeBOM[Item Id]=Rid))),Qty,FILTER(tblRecipeBOM[Qty],Keep),Type,FILTER(tblRecipeBOM[Item Type],Keep),ID,FILTER(tblRecipeBOM[Item Id],Keep),val,SWITCH(Type,""Ingredient"",XLOOKUP(ID,tblIngredients[Id],tblIngredients[Calories],0),""Recipe"",XLOOKUP(ID,[Id],[Calories],0),0),ROUND(SUM(Qty*val),1)),""""))", ATestFilePathStr
 
-  TestPrettyPrintHelper "=IF(EOMONTH(K$2,0)<=EOMONTH('FTM P&L'!$O$2,0),XLOOKUP(EOMONTH(K$2,0),'Import Values from WB4'!$D$3300:$AM$3300,'Import Values from WB4'!$D3309:$AM3309,0,-1),0)"
+  TestPrettyPrintHelper "=IF(EOMONTH(K$2,0)<=EOMONTH('FTM P&L'!$O$2,0),XLOOKUP(EOMONTH(K$2,0),'Import Values from WB4'!$D$3300:$AM$3300,'Import Values from WB4'!$D3309:$AM3309,0,-1),0)", ATestFilePathStr
 
-  TestPrettyPrintHelper "=SUMPRODUCT(--(tblData[Status]=""Active""),--(tblData[Amount]>100),tblData[Value])"
+  TestPrettyPrintHelper "=SUMPRODUCT(--(tblData[Status]=""Active""),--(tblData[Amount]>100),tblData[Value])", ATestFilePathStr
 
   'Comma and open-paren inside a bracketed structured reference must stay on
   'one line -- bracket-tracking must protect them like quotes do.
-  TestPrettyPrintHelper "=SUM([@[Revenue, Total]])"
-  TestPrettyPrintHelper "=SUM([@[Total (Net)]])"
+  TestPrettyPrintHelper "=SUM([@[Revenue, Total]])", ATestFilePathStr
+  TestPrettyPrintHelper "=SUM([@[Total (Net)]])", ATestFilePathStr
 
   'Array literal: real commas get ", " like everywhere else, but must never
   'get a line break -- Excel silently collapses {} back to one line. Its
   'internal commas also must not inflate MATCH's own comma count, so MATCH
   'collapses to one line (see TestPrettyPrintExact for the exact assertion).
-  TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"
+  TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")", ATestFilePathStr
 
-  TestPairArgPostProcess
+  TestPairArgPostProcess ATestFilePathStr
 
 End Sub
 

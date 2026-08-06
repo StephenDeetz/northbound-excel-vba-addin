@@ -57,18 +57,18 @@ Public Function StrCnt(AStr As String, ASubStr As String) As Long
 End Function
 
 
-Private Sub TestStrCntHelper(ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedCnt As Long)
+Private Sub TestStrCntHelper(ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedCnt As Long, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerCnt As Long
   Dim TmpPassFailStr As String
 
   TmpAnswerCnt = StrCnt(AStr, ASubStr)
   TmpPassFailStr = IIf(TmpAnswerCnt = AExpectedCnt, "PASS", "FAIL")
 
-  Debug.Print AStr; " | "; ASubStr; " | "; TmpAnswerCnt; " | "; AExpectedCnt; " | "; TmpPassFailStr
+  TestLogLine AStr & " | " & ASubStr & " | " & TmpAnswerCnt & " | " & AExpectedCnt & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestStrCnt()
-  TestStrCntHelper "/DDDD//", "//", 1
+Private Sub TestStrCnt(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestStrCntHelper "/DDDD//", "//", 1, ATestFilePathStr
 End Sub
 
 
@@ -114,25 +114,25 @@ Public Function RemoveQuotedSections(ByVal AStr As String) As String
 End Function
 
 
-Private Sub TestRemoveQuotedSectionsHelper(ByVal AOriginalStr As String, ByVal AExpectedStr As String)
+Private Sub TestRemoveQuotedSectionsHelper(ByVal AOriginalStr As String, ByVal AExpectedStr As String, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerStr As String
   Dim TmpPassFailStr As String
 
   TmpAnswerStr = RemoveQuotedSections(AOriginalStr)
   TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
 
-  Debug.Print AOriginalStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+  TestLogLine AOriginalStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestRemoveQuotedSections()
-  TestRemoveQuotedSectionsHelper "Test(" & """This is the middle""" & ")", "Test()"
-  TestRemoveQuotedSectionsHelper "SUM([@[Revenue, Total]])", "SUM()"
-  TestRemoveQuotedSectionsHelper "A,[Col1],B", "A,,B"
-  TestRemoveQuotedSectionsHelper "[Col1],[Col2]", ","
-  TestRemoveQuotedSectionsHelper """[literal],text""" & ",A2", ",A2"
-  TestRemoveQuotedSectionsHelper "[]", vbNullString
-  TestRemoveQuotedSectionsHelper "Data!E3,{""A"",""B"",""C""},0", "Data!E3,,0" 'Array literal's internal commas excluded.
-  TestRemoveQuotedSectionsHelper "A,{""X,Y"",""Z""},B", "A,,B" 'Comma inside a quoted array element also excluded.
+Private Sub TestRemoveQuotedSections(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestRemoveQuotedSectionsHelper "Test(" & """This is the middle""" & ")", "Test()", ATestFilePathStr
+  TestRemoveQuotedSectionsHelper "SUM([@[Revenue, Total]])", "SUM()", ATestFilePathStr
+  TestRemoveQuotedSectionsHelper "A,[Col1],B", "A,,B", ATestFilePathStr
+  TestRemoveQuotedSectionsHelper "[Col1],[Col2]", ",", ATestFilePathStr
+  TestRemoveQuotedSectionsHelper """[literal],text""" & ",A2", ",A2", ATestFilePathStr
+  TestRemoveQuotedSectionsHelper "[]", vbNullString, ATestFilePathStr
+  TestRemoveQuotedSectionsHelper "Data!E3,{""A"",""B"",""C""},0", "Data!E3,,0", ATestFilePathStr 'Array literal's internal commas excluded.
+  TestRemoveQuotedSectionsHelper "A,{""X,Y"",""Z""},B", "A,,B", ATestFilePathStr 'Comma inside a quoted array element also excluded.
 End Sub
 
 
@@ -175,20 +175,20 @@ Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String
 End Function
 
 
-Private Sub TestPosSkipQuotedSectionsHelper(ByVal AStart As Long, ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedPos As Long)
+Private Sub TestPosSkipQuotedSectionsHelper(ByVal AStart As Long, ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedPos As Long, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerPos As Long
   Dim TmpPassFailStr As String
 
   TmpAnswerPos = PosSkipQuotedSections(AStart, AStr, ASubStr)
   TmpPassFailStr = IIf(TmpAnswerPos = AExpectedPos, "PASS", "FAIL")
 
-  Debug.Print AStart; " | "; AStr; " | "; ASubStr; " | "; TmpAnswerPos; " | "; AExpectedPos; " | "; TmpPassFailStr
+  TestLogLine AStart & " | " & AStr & " | " & ASubStr & " | " & TmpAnswerPos & " | " & AExpectedPos & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestPosSkipQuotedSections()
-  TestPosSkipQuotedSectionsHelper 1, "=IF(A1=""("",1,2)", ")", 15
-  TestPosSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", 0 'Comma is inside brackets.
-  TestPosSkipQuotedSectionsHelper 1, "Data!E3,{""A"",""B"",""C""},0", ",", 8 'Finds the real separator, skips the array's internal commas.
+Private Sub TestPosSkipQuotedSections(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestPosSkipQuotedSectionsHelper 1, "=IF(A1=""("",1,2)", ")", 15, ATestFilePathStr
+  TestPosSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", 0, ATestFilePathStr 'Comma is inside brackets.
+  TestPosSkipQuotedSectionsHelper 1, "Data!E3,{""A"",""B"",""C""},0", ",", 8, ATestFilePathStr 'Finds the real separator, skips the array's internal commas.
 End Sub
 
 
@@ -238,19 +238,20 @@ Private Sub TestReplaceSkipQuotedSectionsHelper(ByVal AStart As Long, _
                                                 ByVal AStr As String, _
                                                 ByVal ASubStr As String, _
                                                 ByVal ARepStr As String, _
-                                                ByVal AExpectedStr As String)
+                                                ByVal AExpectedStr As String, _
+                                                Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerStr As String
   Dim TmpPassFailStr As String
 
   TmpAnswerStr = ReplaceSkipQuotedSections(AStart, AStr, ASubStr, ARepStr)
   TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
 
-  Debug.Print AStart; " | "; AStr; " | "; ASubStr; " | "; ARepStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+  TestLogLine AStart & " | " & AStr & " | " & ASubStr & " | " & ARepStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestReplaceSkipQuotedSections()
-  TestReplaceSkipQuotedSectionsHelper 1, "=IF(A1,""a,b"",2,3)", ",", ", ", "=IF(A1, ""a,b"", 2, 3)"
-  TestReplaceSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", ", ", "SUM([@[Revenue, Total]])"
+Private Sub TestReplaceSkipQuotedSections(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestReplaceSkipQuotedSectionsHelper 1, "=IF(A1,""a,b"",2,3)", ",", ", ", "=IF(A1, ""a,b"", 2, 3)", ATestFilePathStr
+  TestReplaceSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", ", ", "SUM([@[Revenue, Total]])", ATestFilePathStr
 End Sub
 
 
@@ -273,50 +274,50 @@ Public Function ShtNameRequiresSingleQuotes(ByVal AShtNameStr As String) As Bool
 End Function
 
 
-Private Sub TestShtNameRequiresSingleQuotesHelper(ByVal AShtNameStr As String, ByVal AExpectedBool As Boolean)
+Private Sub TestShtNameRequiresSingleQuotesHelper(ByVal AShtNameStr As String, ByVal AExpectedBool As Boolean, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerBool As Boolean
   Dim TmpPassFailStr As String
 
   TmpAnswerBool = ShtNameRequiresSingleQuotes(AShtNameStr)
   TmpPassFailStr = IIf(TmpAnswerBool = AExpectedBool, "PASS", "FAIL")
 
-  Debug.Print AShtNameStr; " | "; TmpAnswerBool; " | "; AExpectedBool; " | "; TmpPassFailStr
+  TestLogLine AShtNameStr & " | " & TmpAnswerBool & " | " & AExpectedBool & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestShtNameRequiresSingleQuotes()
+Private Sub TestShtNameRequiresSingleQuotes(Optional ByVal ATestFilePathStr As String = vbNullString)
   ' False -- no character from kSpecialChars present.
-  TestShtNameRequiresSingleQuotesHelper "Sheet1", False
-  TestShtNameRequiresSingleQuotesHelper "Sheet123", False
-  TestShtNameRequiresSingleQuotesHelper "Sheet_1", False 'Underscore is notably absent from kSpecialChars.
-  TestShtNameRequiresSingleQuotesHelper "", False 'Empty name: loop never runs, default holds.
+  TestShtNameRequiresSingleQuotesHelper "Sheet1", False, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet123", False, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet_1", False, ATestFilePathStr 'Underscore is notably absent from kSpecialChars.
+  TestShtNameRequiresSingleQuotesHelper "", False, ATestFilePathStr 'Empty name: loop never runs, default holds.
 
   ' True -- one case per character in kSpecialChars (" -',:[]()!&^%$#@{}=+<>?/\"),
   ' so a future edit to that constant can't silently drop coverage.
-  TestShtNameRequiresSingleQuotesHelper "Sheet 1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet-1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet'1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet,1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet:1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet[1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet]1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet(1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet)1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet!1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet&1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet^1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet%1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet$1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet#1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet@1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet{1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet}1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet=1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet+1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet<1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet>1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet?1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet/1", True
-  TestShtNameRequiresSingleQuotesHelper "Sheet\1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet 1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet-1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet'1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet,1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet:1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet[1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet]1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet(1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet)1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet!1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet&1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet^1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet%1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet$1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet#1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet@1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet{1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet}1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet=1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet+1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet<1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet>1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet?1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet/1", True, ATestFilePathStr
+  TestShtNameRequiresSingleQuotesHelper "Sheet\1", True, ATestFilePathStr
 End Sub
 
 
@@ -329,19 +330,19 @@ Public Function ShtFormulaNameStr(ByVal AShtNameStr As String) As String
 End Function
 
 
-Private Sub TestShtFormulaNameStrHelper(ByVal AShtNameStr As String, ByVal AExpectedStr As String)
+Private Sub TestShtFormulaNameStrHelper(ByVal AShtNameStr As String, ByVal AExpectedStr As String, Optional ByVal ATestFilePathStr As String = vbNullString)
   Dim TmpAnswerStr As String
   Dim TmpPassFailStr As String
 
   TmpAnswerStr = ShtFormulaNameStr(AShtNameStr)
   TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
 
-  Debug.Print AShtNameStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+  TestLogLine AShtNameStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr, ATestFilePathStr
 End Sub
 
-Private Sub TestShtFormulaNameStr()
-  TestShtFormulaNameStrHelper "Sheet1", "Sheet1"
-  TestShtFormulaNameStrHelper "Sheet 1", "'Sheet 1'"
+Private Sub TestShtFormulaNameStr(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestShtFormulaNameStrHelper "Sheet1", "Sheet1", ATestFilePathStr
+  TestShtFormulaNameStrHelper "Sheet 1", "'Sheet 1'", ATestFilePathStr
 End Sub
 
 
@@ -370,7 +371,7 @@ Public Function ShortenFormula(ByVal AStr As String) As String
     ElseIf TmpInBrackets Then
       TmpStr = TmpStr + TmpChar 'Brackets Represent Table Column Names that can have spaces.
     Else
-      If (TmpChar <> " ") And (TmpChar <> Chr(10)) Then
+      If (TmpChar <> " ") And (TmpChar <> Chr(10)) And (TmpChar <> Chr(13)) Then
         TmpStr = TmpStr + TmpChar
       End If
     End If
@@ -399,6 +400,26 @@ Public Function ShortenFormula(ByVal AStr As String) As String
 
   ShortenFormula = TmpStr
 End Function
+
+
+Private Sub TestShortenFormulaHelper(ByVal AStr As String, ByVal AExpectedStr As String, Optional ByVal ATestFilePathStr As String = vbNullString)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = ShortenFormula(AStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  TestLogLine AStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr, ATestFilePathStr
+End Sub
+
+Private Sub TestShortenFormula(Optional ByVal ATestFilePathStr As String = vbNullString)
+  TestShortenFormulaHelper "=SUM( A1 , B1 )", "=SUM(A1,B1)", ATestFilePathStr
+
+  'A trailing CRLF-CRLF (e.g. blank lines left over from a previous Pretty
+  'Print) must be fully stripped, not just its LF half -- leaving orphaned
+  'CRs behind previously survived into PrettyPrint's output uncaught.
+  TestShortenFormulaHelper "=SUM(A1,B1)" & vbCrLf & vbCrLf, "=SUM(A1,B1)", ATestFilePathStr
+End Sub
 
 
 Public Sub ClearImmediateWindow()

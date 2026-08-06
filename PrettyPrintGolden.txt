@@ -1,0 +1,166 @@
+>>>>INPUT>>>>
+=IF(A1>0, SUM((A1:B1) + (C1:D1)), "Test,,"){{CRLF}}{{CRLF}}
+>>>>EXPECTED>>>>
+=IF({{LF}}    A1 > 0,{{LF}}    SUM({{LF}}        (A1:B1) + (C1:D1){{LF}}    ),{{LF}}    "Test,,"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=CONCAT("Hello ""World,""","End")
+>>>>EXPECTED>>>>
+=CONCAT("Hello ""World,""", "End")
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(TRIM([@[UTC Offset]])<>"", $B$2 + ([@[UTC Offset]]/24), "")
+>>>>EXPECTED>>>>
+=IF({{LF}}    TRIM([@[UTC Offset]]) <> "",{{LF}}    $B$2 + ([@[UTC Offset]] / 24),{{LF}}    ""{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(TRUE,IF(A1=1,B1+C1,D1),FALSE)
+>>>>EXPECTED>>>>
+=IF(TRUE, IF(A1 = 1, B1 + C1, D1), FALSE)
+>>>>END>>>>
+>>>>INPUT>>>>
+=LAMBDA(Char,CharStatus,Guess,GameArr,CharStatusArr,SUM(MAKEARRAY(1,5,LAMBDA(r,C,IF(AND(INDEX(GameArr,r,C)=Char,INDEX(CharStatusArr,r,C)<>"Not in Word"),1,0)))))(Game!D5,D5,$AP5,Game!$B5:$F5,Interpret!$B5:$F5)
+>>>>EXPECTED>>>>
+=LAMBDA({{LF}}    Char,{{LF}}    CharStatus,{{LF}}    Guess,{{LF}}    GameArr,{{LF}}    CharStatusArr,{{LF}}    SUM({{LF}}        MAKEARRAY({{LF}}            1,{{LF}}            5,{{LF}}            LAMBDA({{LF}}                r,{{LF}}                C,{{LF}}                IF({{LF}}                    AND({{LF}}                        INDEX(GameArr, r, C) = Char,{{LF}}                        INDEX(CharStatusArr, r, C) <> "Not in Word"{{LF}}                    ),{{LF}}                    1,{{LF}}                    0{{LF}}                ){{LF}}            ){{LF}}        ){{LF}}    ){{LF}})({{LF}}    Game!D5,{{LF}}    D5,{{LF}}    $AP5,{{LF}}    Game!$B5:$F5,{{LF}}    Interpret!$B5:$F5{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IFERROR(IF($H18<>"",XLOOKUP($H18,'Client Forecast'!$K:$K,'Client Forecast'!C:C),""),"")
+>>>>EXPECTED>>>>
+=IFERROR({{LF}}    IF({{LF}}        $H18 <> "",{{LF}}        XLOOKUP({{LF}}            $H18,{{LF}}            'Client Forecast'!$K:$K,{{LF}}            'Client Forecast'!C:C{{LF}}        ),{{LF}}        ""{{LF}}    ),{{LF}}    ""{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(TRIM($A2)<>"",INDEX(TEXTSPLIT($A2,"|"),1,3),"")
+>>>>EXPECTED>>>>
+=IF({{LF}}    TRIM($A2) <> "",{{LF}}    INDEX(TEXTSPLIT($A2, "|"), 1, 3),{{LF}}    ""{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=@IF($AF2,IF($AJ2,IF($AP2>0,INDEX(CSV_Std_Translations,1,$AP2),"Blank"),IF(TRIM($C2)<>"",$C2,"Blank")),"")
+>>>>EXPECTED>>>>
+=@IF({{LF}}    $AF2,{{LF}}    IF({{LF}}        $AJ2,{{LF}}        IF({{LF}}            $AP2 > 0,{{LF}}            INDEX(CSV_Std_Translations, 1, $AP2),{{LF}}            "Blank"{{LF}}        ),{{LF}}        IF(TRIM($C2) <> "", $C2, "Blank"){{LF}}    ),{{LF}}    ""{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(IFERROR(FIND(" - ",INDEX(TEXTSPLIT($A2,"|"),1,2)),0)>=0,INDEX(TEXTSPLIT($A2,"|"),1,2),"")
+>>>>EXPECTED>>>>
+=IF({{LF}}    IFERROR({{LF}}        FIND({{LF}}            " - ",{{LF}}            INDEX(TEXTSPLIT($A2, "|"), 1, 2){{LF}}        ),{{LF}}        0{{LF}}    ) >= 0,{{LF}}    INDEX(TEXTSPLIT($A2, "|"), 1, 2),{{LF}}    ""{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(A9,IF(K9<>0,TRIM(MID(B9,J9,FIND(K9,B9,J9)-J9)),MID(B9,J9,2)),"")
+>>>>EXPECTED>>>>
+=IF({{LF}}    A9,{{LF}}    IF({{LF}}        K9 <> 0,{{LF}}        TRIM({{LF}}            MID(B9, J9, FIND(K9, B9, J9) - J9){{LF}}        ),{{LF}}        MID(B9, J9, 2){{LF}}    ),{{LF}}    ""{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(A1<>"", IF(B1>0, IF(C1=1, "Valid", "Invalid"), "Error"), "Blank")
+>>>>EXPECTED>>>>
+=IF({{LF}}    A1 <> "",{{LF}}    IF(B1 > 0, IF(C1 = 1, "Valid", "Invalid"), "Error"),{{LF}}    "Blank"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(A1 <> "", CONCAT("Prefix-", TEXTJOIN(", ", TRUE, B1, C1, D1)), "No Data")
+>>>>EXPECTED>>>>
+=IF({{LF}}    A1 <> "",{{LF}}    CONCAT("Prefix-", TEXTJOIN(", ", TRUE, B1, C1, D1)),{{LF}}    "No Data"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)
+>>>>EXPECTED>>>>
+=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF([@[Net Profit]] > 0, "Profitable", IF([@[Net Profit]] = 0, "Break Even", "Loss"))
+>>>>EXPECTED>>>>
+=IF({{LF}}    [@[Net Profit]] > 0,{{LF}}    "Profitable",{{LF}}    IF([@[Net Profit]] = 0, "Break Even", "Loss"){{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=INDIRECT(ADDRESS(A1, B1, 4))
+>>>>EXPECTED>>>>
+=INDIRECT(ADDRESS(A1, B1, 4))
+>>>>END>>>>
+>>>>INPUT>>>>
+=SUM(SEQUENCE(5, 1, A1, 1) * B1)
+>>>>EXPECTED>>>>
+=SUM(SEQUENCE(5, 1, A1, 1) * B1)
+>>>>END>>>>
+>>>>INPUT>>>>
+=LET(x, A1 + B1, y, x * 2, y - C1)
+>>>>EXPECTED>>>>
+=LET({{LF}}    x, A1 + B1,{{LF}}    y, x * 2,{{LF}}    y - C1{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=CHOOSE(A1, 10, 20, "Text Value", "Another Text")
+>>>>EXPECTED>>>>
+=CHOOSE({{LF}}    A1,{{LF}}    10,{{LF}}    20,{{LF}}    "Text Value",{{LF}}    "Another Text"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(AND([@[% In]],[@[Votes In]]),[@[Rep Need]]/[@[VL-3VL]],0)
+>>>>EXPECTED>>>>
+=IF({{LF}}    AND([@[% In]], [@[Votes In]]),{{LF}}    [@[Rep Need]] / [@[VL-3VL]],{{LF}}    0{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=LAMBDA(Input,Cnt,Pos,Incl,IFS((Cnt+Pos)<0,"[]",(Cnt+Pos)>=8,"[]",NOT(Incl),"["&MID(Input,(Pos+Cnt),(ABS(Cnt)))&"]",TRUE,"["&MID(Input,(Pos+Cnt+1),(ABS(Cnt)))&"]"))($N70,$P70,$Q70,$O70)
+>>>>EXPECTED>>>>
+=LAMBDA({{LF}}    Input,{{LF}}    Cnt,{{LF}}    Pos,{{LF}}    Incl,{{LF}}    IFS({{LF}}        (Cnt + Pos) < 0, "[]",{{LF}}        (Cnt + Pos) >= 8, "[]",{{LF}}        NOT(Incl), "[" & MID({{LF}}            Input,{{LF}}            (Pos + Cnt),{{LF}}            (ABS(Cnt)){{LF}}        ) & "]",{{LF}}        TRUE, "[" & MID({{LF}}            Input,{{LF}}            (Pos + Cnt + 1),{{LF}}            (ABS(Cnt)){{LF}}        ) & "]"{{LF}}    ){{LF}})($N70, $P70, $Q70, $O70)
+>>>>END>>>>
+>>>>INPUT>>>>
+=LET(x, ((A1+B1)), y, IF(x>0, LET(u, x*2, v, u+3, v), ((x))), y)
+>>>>EXPECTED>>>>
+=LET({{LF}}    x, ((A1 + B1)),{{LF}}    y, IF({{LF}}        x > 0,{{LF}}        LET({{LF}}            u, x * 2,{{LF}}            v, u + 3,{{LF}}            v{{LF}}        ),{{LF}}        ((x)){{LF}}    ),{{LF}}    y{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=LET(x, (A1 + B1) * ((C1 + D1)), y, LET(u, x + 1, v, u * 3, v), y + ((x)))
+>>>>EXPECTED>>>>
+=LET({{LF}}    x, (A1 + B1) * ((C1 + D1)),{{LF}}    y, LET({{LF}}        u, x + 1,{{LF}}        v, u * 3,{{LF}}        v{{LF}}    ),{{LF}}    y + ((x)){{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=LET(x, A1 + (B1 + (C1)), y, x * 2, y - ((C1)))
+>>>>EXPECTED>>>>
+=LET({{LF}}    x, A1 + (B1 + (C1)),{{LF}}    y, x * 2,{{LF}}    y - ((C1)){{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF([@Active]=FALSE,0,IFERROR(LET(Rid,[@Id],Keep,(tblRecipeBOM[Recipe Id]=Rid)*(1-((tblRecipeBOM[Item Type]="Recipe")*(tblRecipeBOM[Item Id]=Rid))),Qty,FILTER(tblRecipeBOM[Qty],Keep),Type,FILTER(tblRecipeBOM[Item Type],Keep),ID,FILTER(tblRecipeBOM[Item Id],Keep),val,SWITCH(Type,"Ingredient",XLOOKUP(ID,tblIngredients[Id],tblIngredients[Calories],0),"Recipe",XLOOKUP(ID,[Id],[Calories],0),0),ROUND(SUM(Qty*val),1)),""))
+>>>>EXPECTED>>>>
+=IF({{LF}}    [@Active] = FALSE,{{LF}}    0,{{LF}}    IFERROR({{LF}}        LET({{LF}}            Rid, [@Id],{{LF}}            Keep, (tblRecipeBOM[Recipe Id] = Rid) * ({{LF}}                1 - ({{LF}}                    (tblRecipeBOM[Item Type] = "Recipe") * (tblRecipeBOM[Item Id] = Rid){{LF}}                ){{LF}}            ),{{LF}}            Qty, FILTER(tblRecipeBOM[Qty], Keep),{{LF}}            Type, FILTER(tblRecipeBOM[Item Type], Keep),{{LF}}            ID, FILTER(tblRecipeBOM[Item Id], Keep),{{LF}}            val, SWITCH({{LF}}                Type,{{LF}}                "Ingredient", XLOOKUP(ID, tblIngredients[Id], tblIngredients[Calories], 0),{{LF}}                "Recipe", XLOOKUP(ID, [Id], [Calories], 0),{{LF}}                0{{LF}}            ),{{LF}}            ROUND(SUM(Qty * val), 1){{LF}}        ),{{LF}}        ""{{LF}}    ){{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IF(EOMONTH(K$2,0)<=EOMONTH('FTM P&L'!$O$2,0),XLOOKUP(EOMONTH(K$2,0),'Import Values from WB4'!$D$3300:$AM$3300,'Import Values from WB4'!$D3309:$AM3309,0,-1),0)
+>>>>EXPECTED>>>>
+=IF({{LF}}    EOMONTH(K$2, 0) <= EOMONTH('FTM P&L'!$O$2, 0),{{LF}}    XLOOKUP({{LF}}        EOMONTH(K$2, 0),{{LF}}        'Import Values from WB4'!$D$3300:$AM$3300,{{LF}}        'Import Values from WB4'!$D3309:$AM3309,{{LF}}        0,{{LF}}        -1{{LF}}    ),{{LF}}    0{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=SUMPRODUCT(--(tblData[Status]="Active"),--(tblData[Amount]>100),tblData[Value])
+>>>>EXPECTED>>>>
+=SUMPRODUCT({{LF}}    --(tblData[Status] = "Active"),{{LF}}    --(tblData[Amount] > 100),{{LF}}    tblData[Value]{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=SUM([@[Revenue, Total]])
+>>>>EXPECTED>>>>
+=SUM([@[Revenue, Total]])
+>>>>END>>>>
+>>>>INPUT>>>>
+=SUM([@[Total (Net)]])
+>>>>EXPECTED>>>>
+=SUM([@[Total (Net)]])
+>>>>END>>>>
+>>>>INPUT>>>>
+=CHOOSE(MATCH(Data!E3,{"A","B","C"},0),"Alpha","Beta","Gamma")
+>>>>EXPECTED>>>>
+=CHOOSE({{LF}}    MATCH(Data!E3, {"A", "B", "C"}, 0),{{LF}}    "Alpha",{{LF}}    "Beta",{{LF}}    "Gamma"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=LET(a, 1, b, 2, a + b)
+>>>>EXPECTED>>>>
+=LET({{LF}}    a, 1,{{LF}}    b, 2,{{LF}}    a + b{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=IFS(A1 > 10, "High", A1 > 5, "Mid", TRUE, "Low")
+>>>>EXPECTED>>>>
+=IFS({{LF}}    A1 > 10, "High",{{LF}}    A1 > 5, "Mid",{{LF}}    TRUE, "Low"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=SWITCH(A1, 1, "One", 2, "Two", "Other")
+>>>>EXPECTED>>>>
+=SWITCH({{LF}}    A1,{{LF}}    1, "One",{{LF}}    2, "Two",{{LF}}    "Other"{{LF}})
+>>>>END>>>>
+>>>>INPUT>>>>
+=SWITCH(A1, 1, "One", 2, "Two", "Default")
+>>>>EXPECTED>>>>
+=SWITCH({{LF}}    A1,{{LF}}    1, "One",{{LF}}    2, "Two",{{LF}}    "Default"{{LF}})
+>>>>END>>>>
+
