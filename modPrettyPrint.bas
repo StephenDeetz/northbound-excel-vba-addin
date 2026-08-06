@@ -486,7 +486,12 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
           
           If TmpSimpleArgText <> vbNullString Then
             TmpResult = TmpResult & TmpSimpleArgText
-            TmpCnt = TmpCnt + Len(TmpSimpleArgText) - StrCnt(RemoveQuotedSections(TmpSimpleArgText), ", ") 'Space inserted by SimpleArgText
+            'TmpSimpleArgText already includes the matching ")" as literal
+            'text, so jump the cursor straight to that position (recomputed
+            'directly, not inferred from a ", " count -- that count broke
+            'once RemoveQuotedSections started fully removing {} blocks,
+            'since ReplaceSkipQuotedSections still spaces commas inside them).
+            TmpCnt = FindMatchingCloseParen(TmpCnt, TmpFrmStr)
           Else
             Inc TmpLevel
 
@@ -581,6 +586,33 @@ Private Sub TestPrettyPrintWouldChangeFormula()
 End Sub
 
 
+Private Sub TestPrettyPrintExactHelper(ByVal AFrmStr As String, ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = PrettyPrint(AFrmStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  Debug.Print AFrmStr; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+End Sub
+
+Private Sub TestPrettyPrintExact()
+  'An array literal inside a function's argument list must not inflate that
+  'call's own comma count with the array's internal commas -- MATCH here has
+  'only 2 real arguments (Data!E3 and 0, plus the array as a whole), so it
+  'should collapse to one line same as any other short, simple call. CHOOSE
+  'stays multi-line since ITS own argument list is long regardless.
+  TestPrettyPrintExactHelper _
+    "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")", _
+    "=CHOOSE(" & vbLf & _
+    "    MATCH(Data!E3, {""A"", ""B"", ""C""}, 0)," & vbLf & _
+    "    ""Alpha""," & vbLf & _
+    "    ""Beta""," & vbLf & _
+    "    ""Gamma""" & vbLf & _
+    ")"
+End Sub
+
+
 Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
   LogWrite "-------------------------------------------------"
   LogWrite AFrmStr
@@ -639,7 +671,9 @@ Private Sub TestPrettyPrint()
   TestPrettyPrintHelper "=SUM([@[Total (Net)]])"
 
   'Array literal: real commas get ", " like everywhere else, but must never
-  'get a line break -- Excel silently collapses {} back to one line.
+  'get a line break -- Excel silently collapses {} back to one line. Its
+  'internal commas also must not inflate MATCH's own comma count, so MATCH
+  'collapses to one line (see TestPrettyPrintExact for the exact assertion).
   TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"
 
   TestPairArgPostProcess

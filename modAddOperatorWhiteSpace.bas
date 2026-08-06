@@ -15,8 +15,9 @@ Private Function TrimEnd(ByVal AStr As String) As String
 End Function
 
 
-' True if '-' follows an operator, '(', ',', or start of formula - i.e. a unary sign
-' (e.g. "-1", "(-A1)"), not a binary subtraction operator (e.g. "A1-B1").
+' True if '-' follows an operator, '(', ',', '{', or start of formula - i.e. a
+' unary sign (e.g. "-1", "(-A1)", "{-1,2}"), not a binary subtraction
+' operator (e.g. "A1-B1").
 Private Function IsUnaryMinusContext(ByVal AStr As String) As Boolean
   Dim TmpCnt As Long
   Dim TmpCh  As String
@@ -25,7 +26,7 @@ Private Function IsUnaryMinusContext(ByVal AStr As String) As Boolean
     TmpCh = Mid$(AStr, TmpCnt, 1)
     If TmpCh <> " " And TmpCh <> vbLf Then
       Select Case TmpCh
-        Case ",", "(", "+", "-", "*", "/", "^", "&", "=", "<", ">"
+        Case ",", "(", "{", "+", "-", "*", "/", "^", "&", "=", "<", ">"
           IsUnaryMinusContext = True
         Case Else
           IsUnaryMinusContext = False
@@ -54,50 +55,44 @@ Private Function IsOperator(ByVal AStr As String, _
   IsOperator = False
 End Function
 
+Private Sub TestIsOperatorHelper(ByVal AStr As String, ByVal AOps As Variant, ByVal AExpectedBool As Boolean)
+  Dim TmpAnswerBool As Boolean
+  Dim TmpPassFailStr As String
+
+  TmpAnswerBool = IsOperator(AStr, AOps)
+  TmpPassFailStr = IIf(TmpAnswerBool = AExpectedBool, "PASS", "FAIL")
+
+  Debug.Print AStr; " | "; TmpAnswerBool; " | "; AExpectedBool; " | "; TmpPassFailStr
+End Sub
+
 Private Sub TestIsMultiOperator()
   Dim TmpMultiOps As Variant
-  Dim TmpResult As Boolean
-
-  ' Define multi-character operators
   TmpMultiOps = Array("<=", ">=", "<>")
 
-  ' Test cases
-  Debug.Print "Testing IsOperator (multi)..."
-  Debug.Print "'<='   -> " & IsOperator("<=", TmpMultiOps) ' Expected: True
-  Debug.Print "'>='   -> " & IsOperator(">=", TmpMultiOps) ' Expected: True
-  Debug.Print "'<>'   -> " & IsOperator("<>", TmpMultiOps) ' Expected: True
-  Debug.Print "'='    -> " & IsOperator("=", TmpMultiOps) ' Expected: False
-  Debug.Print "'<X>'  -> " & IsOperator("<X>", TmpMultiOps) ' Expected: False
-  Debug.Print "'>>'   -> " & IsOperator(">>", TmpMultiOps) ' Expected: False
-  Debug.Print "'<=' (extra space) -> " & IsOperator("<= ", TmpMultiOps) ' Expected: False
-
-  Debug.Print "TestIsMultiOperator Complete."
+  TestIsOperatorHelper "<=", TmpMultiOps, True
+  TestIsOperatorHelper ">=", TmpMultiOps, True
+  TestIsOperatorHelper "<>", TmpMultiOps, True
+  TestIsOperatorHelper "=", TmpMultiOps, False
+  TestIsOperatorHelper "<X>", TmpMultiOps, False
+  TestIsOperatorHelper ">>", TmpMultiOps, False
+  TestIsOperatorHelper "<= ", TmpMultiOps, False 'Trailing space -- exact match required.
 End Sub
 
 
 Private Sub TestIsSingleOperator()
   Dim TmpSingleOps As Variant
-  Dim TmpResult As Boolean
-
-  ' Define single-character operators
   TmpSingleOps = Array("+", "-", "*", "/", "^", "&", "=", "<", ">")
 
-  ' Test cases for all valid single-character operators
-  Debug.Print "Testing IsOperator (single)..."
-  Debug.Print "'+'  -> " & IsOperator("+", TmpSingleOps) ' Expected: True
-  Debug.Print "'-'  -> " & IsOperator("-", TmpSingleOps) ' Expected: True
-  Debug.Print "'*'  -> " & IsOperator("*", TmpSingleOps) ' Expected: True
-  Debug.Print "'/'  -> " & IsOperator("/", TmpSingleOps) ' Expected: True
-  Debug.Print "'^'  -> " & IsOperator("^", TmpSingleOps) ' Expected: True
-  Debug.Print "'&'  -> " & IsOperator("&", TmpSingleOps) ' Expected: True
-  Debug.Print "'='  -> " & IsOperator("=", TmpSingleOps) ' Expected: True
-  Debug.Print "'<'  -> " & IsOperator("<", TmpSingleOps) ' Expected: True
-  Debug.Print "'>'  -> " & IsOperator(">", TmpSingleOps) ' Expected: True
-
-  ' Test case for a character that is NOT a single operator
-  Debug.Print "'@'  -> " & IsOperator("@", TmpSingleOps) ' Expected: False
-
-  Debug.Print "TestIsSingleOperator Complete."
+  TestIsOperatorHelper "+", TmpSingleOps, True
+  TestIsOperatorHelper "-", TmpSingleOps, True
+  TestIsOperatorHelper "*", TmpSingleOps, True
+  TestIsOperatorHelper "/", TmpSingleOps, True
+  TestIsOperatorHelper "^", TmpSingleOps, True
+  TestIsOperatorHelper "&", TmpSingleOps, True
+  TestIsOperatorHelper "=", TmpSingleOps, True
+  TestIsOperatorHelper "<", TmpSingleOps, True
+  TestIsOperatorHelper ">", TmpSingleOps, True
+  TestIsOperatorHelper "@", TmpSingleOps, False 'Not a recognized operator character.
 End Sub
 
 
@@ -222,104 +217,136 @@ Private Sub TestAddOperatorWhiteSpaceHelper(ByVal AFormula As String)
   Debug.Print "After:  "; AddOperatorWhiteSpace(AFormula)
 End Sub
 
-Private Sub TestAddOperatorWhiteSpace()
-  Debug.Print "Testing AddOperatorWhiteSpace..."
+Private Sub TestAddOperatorWhiteSpaceExactHelper(ByVal AFormula As String, ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
 
+  TmpAnswerStr = AddOperatorWhiteSpace(AFormula)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  Debug.Print AFormula; " | "; TmpAnswerStr; " | "; AExpectedStr; " | "; TmpPassFailStr
+End Sub
+
+Private Sub TestAddOperatorWhiteSpaceExact()
+  ' Array literals only ever hold constants in Excel -- no operators except
+  ' a leading "-" on a negative number literal. "{" wasn't recognized as a
+  ' valid unary-minus context (unlike "(" and ","), so a negative number
+  ' right after "{" used to get split into "{ - 1" instead of staying "{-1".
+  TestAddOperatorWhiteSpaceExactHelper "={-1,2,-3}", "={-1,2,-3}"
+  TestAddOperatorWhiteSpaceExactHelper "={-1}", "={-1}"
+  TestAddOperatorWhiteSpaceExactHelper "={1,2,3}", "={1,2,3}"
+
+  ' Comma-space formatting (what PrettyPrint's own {} fix now produces) must
+  ' not confuse the unary check -- IsUnaryMinusContext skips back past the
+  ' space to find the comma, same as it always did outside of braces.
+  TestAddOperatorWhiteSpaceExactHelper "={-1, 2, -3}", "={-1, 2, -3}"
+
+  ' A pre-existing space right after "{" (before this fix, the least likely
+  ' real-world case, but the purest test of the whitespace-skip itself).
+  ' The unary branch never trims -- unlike the binary-spacing branch, which
+  ' calls TrimEnd -- so this space is preserved, not stripped.
+  TestAddOperatorWhiteSpaceExactHelper "={ -1,2,-3}", "={ -1,2,-3}"
+End Sub
+
+Private Sub TestAddOperatorWhiteSpace()
   ' Simple formula with single-character operators
-  TestAddOperatorWhiteSpaceHelper "=A1+B1*C1/D1^E1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1+B1*C1/D1^E1", "=A1 + B1 * C1 / D1 ^ E1"
 
   ' Multi-character operators
-  TestAddOperatorWhiteSpaceHelper "=A1<=B1>=C1<>D1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1<=B1>=C1<>D1", "=A1 <= B1 >= C1 <> D1"
 
   ' Brackets (Table reference)
-  TestAddOperatorWhiteSpaceHelper "=SUM([Sales])"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM([Sales])", "=SUM([Sales])"
 
   ' Nested Brackets (Table references inside functions)
-  TestAddOperatorWhiteSpaceHelper "=INDEX(Table1[Column1], MATCH(A1, Table1[Column2], 0))"
+  TestAddOperatorWhiteSpaceExactHelper "=INDEX(Table1[Column1], MATCH(A1, Table1[Column2], 0))", "=INDEX(Table1[Column1], MATCH(A1, Table1[Column2], 0))"
 
   ' Single quotes for sheet names with spaces
-  TestAddOperatorWhiteSpaceHelper "='Sheet Name'!A1+'Another Sheet'!B1"
+  TestAddOperatorWhiteSpaceExactHelper "='Sheet Name'!A1+'Another Sheet'!B1", "='Sheet Name'!A1 + 'Another Sheet'!B1"
 
   ' Mixed: Multi-ops, brackets, and single quotes
-  TestAddOperatorWhiteSpaceHelper "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2"
+  TestAddOperatorWhiteSpaceExactHelper "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2", "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2"
 
   ' Brackets with operators
-  TestAddOperatorWhiteSpaceHelper "=SUM([Revenue] - [Cost] / [Units])"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM([Revenue] - [Cost] / [Units])", "=SUM([Revenue] - [Cost] / [Units])"
 
   ' Brackets with operators without spaces
-  TestAddOperatorWhiteSpaceHelper "=SUM([Revenue]-[Cost]/[Units])"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM([Revenue]-[Cost]/[Units])", "=SUM([Revenue] - [Cost] / [Units])"
 
   ' Brackets with operators without spaces
-  TestAddOperatorWhiteSpaceHelper "=IF(AND([@[% In]],[@[Votes In]]),[@[Dem Votes]]/[@[Votes In]],0)"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(AND([@[% In]],[@[Votes In]]),[@[Dem Votes]]/[@[Votes In]],0)", "=IF(AND([@[% In]],[@[Votes In]]),[@[Dem Votes]] / [@[Votes In]],0)"
 
   ' Miscellaneous case
-  TestAddOperatorWhiteSpaceHelper "=IF(AND([@[% In]],[@[Votes In]]),[@[Total - 3rd]]/2+1, 0)"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(AND([@[% In]],[@[Votes In]]),[@[Total - 3rd]]/2+1, 0)", "=IF(AND([@[% In]],[@[Votes In]]),[@[Total - 3rd]] / 2 + 1, 0)"
 
   ' Multi-character operator followed by a space
-  TestAddOperatorWhiteSpaceHelper "=IF(A1<= 100, ""Valid"", ""Invalid"")"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1<= 100, ""Valid"", ""Invalid"")", "=IF(A1 <= 100, ""Valid"", ""Invalid"")"
 
   ' Double bracket nesting (complex table references)
-  TestAddOperatorWhiteSpaceHelper "=XLOOKUP(A1, Table1[[Lookup Col1]:[Lookup Col2]], Table1[Return Col])"
+  TestAddOperatorWhiteSpaceExactHelper "=XLOOKUP(A1, Table1[[Lookup Col1]:[Lookup Col2]], Table1[Return Col])", "=XLOOKUP(A1, Table1[[Lookup Col1]:[Lookup Col2]], Table1[Return Col])"
 
   ' Function inside single quotes with operators
-  TestAddOperatorWhiteSpaceHelper "='Sales Report'!A1 & 'Sales Report'!B1"
+  TestAddOperatorWhiteSpaceExactHelper "='Sales Report'!A1 & 'Sales Report'!B1", "='Sales Report'!A1 & 'Sales Report'!B1"
 
   'Long.
-  TestAddOperatorWhiteSpaceHelper "=IF(TRIM([@[Time Loc Index]])<>"""",INDEX(tblTimeLocations[UTC Offset],[@[Time Loc Index]],1)+IF(INDEX(tblTimeLocations[DST True/False],[@[Time Loc Index]],1),INDEX(tblTimeLocations[DST Now],[@[Time Loc Index]],1),FALSE),"")"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(TRIM([@[Time Loc Index]])<>"""",INDEX(tblTimeLocations[UTC Offset],[@[Time Loc Index]],1)+IF(INDEX(tblTimeLocations[DST True/False],[@[Time Loc Index]],1),INDEX(tblTimeLocations[DST Now],[@[Time Loc Index]],1),FALSE),"")", _
+    "=IF(TRIM([@[Time Loc Index]]) <> """",INDEX(tblTimeLocations[UTC Offset],[@[Time Loc Index]],1) + IF(INDEX(tblTimeLocations[DST True/False],[@[Time Loc Index]],1),INDEX(tblTimeLocations[DST Now],[@[Time Loc Index]],1),FALSE),"")"
 
-  TestAddOperatorWhiteSpaceHelper "=[@[Sales Total]]-[@[Expense Total]]"
+  TestAddOperatorWhiteSpaceExactHelper "=[@[Sales Total]]-[@[Expense Total]]", "=[@[Sales Total]] - [@[Expense Total]]"
 
-  TestAddOperatorWhiteSpaceHelper "=LAMBDA(Input,Cnt,Pos,Incl,IFS((Cnt+Pos)<0,""[]"",(Cnt+Pos)>=8,""[]"",NOT(Incl),""[""&MID(Input,(Pos+Cnt),(ABS(Cnt)))&""]"",TRUE,""[""&MID(Input,(Pos+Cnt+1),(ABS(Cnt)))&""]""))($N70,$P70,$Q70,$O70)"
+  TestAddOperatorWhiteSpaceExactHelper "=LAMBDA(Input,Cnt,Pos,Incl,IFS((Cnt+Pos)<0,""[]"",(Cnt+Pos)>=8,""[]"",NOT(Incl),""[""&MID(Input,(Pos+Cnt),(ABS(Cnt)))&""]"",TRUE,""[""&MID(Input,(Pos+Cnt+1),(ABS(Cnt)))&""]""))($N70,$P70,$Q70,$O70)", _
+    "=LAMBDA(Input,Cnt,Pos,Incl,IFS((Cnt + Pos) < 0,""[]"",(Cnt + Pos) >= 8,""[]"",NOT(Incl),""["" & MID(Input,(Pos + Cnt),(ABS(Cnt))) & ""]"",TRUE,""["" & MID(Input,(Pos + Cnt + 1),(ABS(Cnt))) & ""]""))($N70,$P70,$Q70,$O70)"
 
   ' Multiple sheet refs with & in name - second ref must not get spaces around &
-  TestAddOperatorWhiteSpaceHelper "=IF(AND(Index!$K$2=""Forecast"",'Product Sales'!J$6>='FTM P&L'!$O$2),'Import Values from WB4'!J223,IF(AND(Index!$K$2=""Historical"",'Product Sales'!J$6<'FTM P&L'!$O$2),'Import Values from WB4'!J223,0))"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(AND(Index!$K$2=""Forecast"",'Product Sales'!J$6>='FTM P&L'!$O$2),'Import Values from WB4'!J223,IF(AND(Index!$K$2=""Historical"",'Product Sales'!J$6<'FTM P&L'!$O$2),'Import Values from WB4'!J223,0))", _
+    "=IF(AND(Index!$K$2 = ""Forecast"",'Product Sales'!J$6 >= 'FTM P&L'!$O$2),'Import Values from WB4'!J223,IF(AND(Index!$K$2 = ""Historical"",'Product Sales'!J$6 < 'FTM P&L'!$O$2),'Import Values from WB4'!J223,0))"
 
   ' Unary minus must not strip indentation or add left space
-  TestAddOperatorWhiteSpaceHelper "=XLOOKUP(A1,B1:B10,C1:C10,0,-1)"
+  TestAddOperatorWhiteSpaceExactHelper "=XLOOKUP(A1,B1:B10,C1:C10,0,-1)", "=XLOOKUP(A1,B1:B10,C1:C10,0,-1)"
 
   ' -- coercion operator must not strip indentation in multi-line context
-  TestAddOperatorWhiteSpaceHelper "=SUMPRODUCT(--(tblData[Status]=""Active""),--(tblData[Amount]>100),tblData[Value])"
+  TestAddOperatorWhiteSpaceExactHelper "=SUMPRODUCT(--(tblData[Status]=""Active""),--(tblData[Amount]>100),tblData[Value])", "=SUMPRODUCT(--(tblData[Status] = ""Active""),--(tblData[Amount] > 100),tblData[Value])"
   Debug.Print "TestAddOperatorWhiteSpace Complete."
 End Sub
 
 
 Private Sub TestAddOperatorWhiteSpaceEdgeCases()
-  Debug.Print "Testing AddOperatorWhiteSpace Edge Cases..."
-
   ' Multi-operator followed by space
-  TestAddOperatorWhiteSpaceHelper "=IF(A1<>"""", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1<>"""", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")", _
+    "=IF(A1 <> """", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")"
 
   ' Nested brackets with multi-operators
-  TestAddOperatorWhiteSpaceHelper "=XLOOKUP(A1, Table1[[Lookup Col1]:[Lookup Col2]], Table1[Return Col])"
+  TestAddOperatorWhiteSpaceExactHelper "=XLOOKUP(A1, Table1[[Lookup Col1]:[Lookup Col2]], Table1[Return Col])", "=XLOOKUP(A1, Table1[[Lookup Col1]:[Lookup Col2]], Table1[Return Col])"
 
   ' Nested brackets inside an INDEX function
-  TestAddOperatorWhiteSpaceHelper "=INDEX(Table1[[Column1]:[Column2]], MATCH(A1, Table1[Column3], 0))"
+  TestAddOperatorWhiteSpaceExactHelper "=INDEX(Table1[[Column1]:[Column2]], MATCH(A1, Table1[Column3], 0))", "=INDEX(Table1[[Column1]:[Column2]], MATCH(A1, Table1[Column3], 0))"
 
   ' Table reference with subtraction and division (original issue)
-  TestAddOperatorWhiteSpaceHelper "=SUM([Revenue] - [Cost] / [Units])"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM([Revenue] - [Cost] / [Units])", "=SUM([Revenue] - [Cost] / [Units])"
 
   ' Multi-character operator at the end of formula
-  TestAddOperatorWhiteSpaceHelper "=IF(A1 <= 100, ""Valid"", ""Invalid"")"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1 <= 100, ""Valid"", ""Invalid"")", "=IF(A1 <= 100, ""Valid"", ""Invalid"")"
 
   ' Text containing an Excel operator should remain unchanged
-  TestAddOperatorWhiteSpaceHelper "=TEXTJOIN("", "", TRUE, ""A+B"", ""C&D"", ""X<>Y"")"
+  TestAddOperatorWhiteSpaceExactHelper "=TEXTJOIN("", "", TRUE, ""A+B"", ""C&D"", ""X<>Y"")", "=TEXTJOIN("", "", TRUE, ""A+B"", ""C&D"", ""X<>Y"")"
 
   ' Operator directly after brackets (ensuring no extra space is added)
-  TestAddOperatorWhiteSpaceHelper "=SUM([Sales]+[Costs]/[Units])"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM([Sales]+[Costs]/[Units])", "=SUM([Sales] + [Costs] / [Units])"
 
   ' Single quotes and table reference in same formula
-  TestAddOperatorWhiteSpaceHelper "='Sales Report'!A1 & 'Sales Report'!B1"
+  TestAddOperatorWhiteSpaceExactHelper "='Sales Report'!A1 & 'Sales Report'!B1", "='Sales Report'!A1 & 'Sales Report'!B1"
 
   ' Function inside single quotes with multi-operators
-  TestAddOperatorWhiteSpaceHelper "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2"
+  TestAddOperatorWhiteSpaceExactHelper "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2", "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2"
 
-  TestAddOperatorWhiteSpaceHelper "='Data Sheet'!A1 + [Table1[Sales]]<='Summary'!B2"
+  TestAddOperatorWhiteSpaceExactHelper "='Data Sheet'!A1 + [Table1[Sales]]<='Summary'!B2", "='Data Sheet'!A1 + [Table1[Sales]] <= 'Summary'!B2"
 
   ' make sure -- stays together
-  TestAddOperatorWhiteSpaceHelper "=--C1"
+  TestAddOperatorWhiteSpaceExactHelper "=--C1", "=--C1"
 
   ' Operator next to a bracket (ensuring no double spaces)
-  TestAddOperatorWhiteSpaceHelper "=IF(A1<>"""", [Table1[Column1]]+[Table1[Column2]], """")"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1<>"""", [Table1[Column1]]+[Table1[Column2]], """")", _
+    "=IF(A1 <> """", [Table1[Column1]] + [Table1[Column2]], """")"
 
   Debug.Print "TestAddOperatorWhiteSpaceEdgeCases Complete."
 End Sub

@@ -76,6 +76,7 @@ Public Function RemoveQuotedSections(ByVal AStr As String) As String
   Dim TmpResult As String
   Dim TmpInsideQuotes As Boolean
   Dim TmpInBracketsCnt As Long
+  Dim TmpInBraces As Boolean
   Dim TmpChar As String
   Dim TmpIsDelimiter As Boolean
   Dim i As Long
@@ -96,9 +97,15 @@ Public Function RemoveQuotedSections(ByVal AStr As String) As String
     ElseIf Not TmpInsideQuotes And TmpChar = "]" And TmpInBracketsCnt > 0 Then
       TmpInBracketsCnt = TmpInBracketsCnt - 1
       TmpIsDelimiter = True
+    ElseIf Not TmpInsideQuotes And Not TmpInBraces And TmpChar = "{" Then
+      TmpInBraces = True 'Array literal, e.g. {"A","B","C"} -- treat as one
+      TmpIsDelimiter = True 'opaque unit, same as a quoted string (can't nest
+    ElseIf Not TmpInsideQuotes And TmpInBraces And TmpChar = "}" Then 'in Excel).
+      TmpInBraces = False
+      TmpIsDelimiter = True
     End If
 
-    If Not TmpIsDelimiter And Not TmpInsideQuotes And TmpInBracketsCnt = 0 Then
+    If Not TmpIsDelimiter And Not TmpInsideQuotes And TmpInBracketsCnt = 0 And Not TmpInBraces Then
       TmpResult = TmpResult & TmpChar
     End If
   Next i
@@ -124,6 +131,8 @@ Private Sub TestRemoveQuotedSections()
   TestRemoveQuotedSectionsHelper "[Col1],[Col2]", ","
   TestRemoveQuotedSectionsHelper """[literal],text""" & ",A2", ",A2"
   TestRemoveQuotedSectionsHelper "[]", vbNullString
+  TestRemoveQuotedSectionsHelper "Data!E3,{""A"",""B"",""C""},0", "Data!E3,,0" 'Array literal's internal commas excluded.
+  TestRemoveQuotedSectionsHelper "A,{""X,Y"",""Z""},B", "A,,B" 'Comma inside a quoted array element also excluded.
 End Sub
 
 
@@ -131,6 +140,7 @@ Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String
   Dim TmpInsideQuotes As Boolean
   Dim TmpInBrackets As Boolean
   Dim TmpInBracketsCnt As Long
+  Dim TmpInBraces As Boolean
   Dim TmpChar As String
   Dim i As Long
 
@@ -143,7 +153,7 @@ Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String
 
     If TmpChar = """" Then
       TmpInsideQuotes = Not TmpInsideQuotes
-    ElseIf Not TmpInsideQuotes And Not TmpInBrackets Then
+    ElseIf Not TmpInsideQuotes And Not TmpInBrackets And Not TmpInBraces Then
       If Mid$(AStr, i, Len(ASubStr)) = ASubStr Then
         PosSkipQuotedSections = i
         Exit Function
@@ -154,6 +164,11 @@ Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String
       If TmpChar = "[" Then TmpInBracketsCnt = TmpInBracketsCnt + 1
       If TmpChar = "]" Then TmpInBracketsCnt = TmpInBracketsCnt - 1
       TmpInBrackets = TmpInBracketsCnt > 0
+
+      'Array literal, e.g. {"A","B","C"} -- can't nest in Excel, so a simple
+      'toggle (not a counter) is enough.
+      If TmpChar = "{" Then TmpInBraces = True
+      If TmpChar = "}" Then TmpInBraces = False
     End If
   Next i
 
@@ -173,6 +188,7 @@ End Sub
 Private Sub TestPosSkipQuotedSections()
   TestPosSkipQuotedSectionsHelper 1, "=IF(A1=""("",1,2)", ")", 15
   TestPosSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", 0 'Comma is inside brackets.
+  TestPosSkipQuotedSectionsHelper 1, "Data!E3,{""A"",""B"",""C""},0", ",", 8 'Finds the real separator, skips the array's internal commas.
 End Sub
 
 
@@ -268,8 +284,39 @@ Private Sub TestShtNameRequiresSingleQuotesHelper(ByVal AShtNameStr As String, B
 End Sub
 
 Private Sub TestShtNameRequiresSingleQuotes()
+  ' False -- no character from kSpecialChars present.
   TestShtNameRequiresSingleQuotesHelper "Sheet1", False
+  TestShtNameRequiresSingleQuotesHelper "Sheet123", False
+  TestShtNameRequiresSingleQuotesHelper "Sheet_1", False 'Underscore is notably absent from kSpecialChars.
+  TestShtNameRequiresSingleQuotesHelper "", False 'Empty name: loop never runs, default holds.
+
+  ' True -- one case per character in kSpecialChars (" -',:[]()!&^%$#@{}=+<>?/\"),
+  ' so a future edit to that constant can't silently drop coverage.
   TestShtNameRequiresSingleQuotesHelper "Sheet 1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet-1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet'1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet,1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet:1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet[1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet]1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet(1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet)1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet!1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet&1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet^1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet%1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet$1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet#1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet@1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet{1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet}1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet=1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet+1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet<1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet>1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet?1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet/1", True
+  TestShtNameRequiresSingleQuotesHelper "Sheet\1", True
 End Sub
 
 
