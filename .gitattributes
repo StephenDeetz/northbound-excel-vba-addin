@@ -1,0 +1,11 @@
+# VBE requires CRLF for .cls/.frm or it imports them as standard modules
+# instead of class modules/forms -- see CLAUDE.md's Class module editing
+# convention. .bas modules work fine as LF and that's what this repo's
+# tooling produces, so pin each explicitly instead of relying on every
+# contributor's global core.autocrlf setting to happen to match.
+
+* text=auto
+
+*.bas text eol=lf
+*.cls text eol=crlf
+*.frm text eol=crlf
