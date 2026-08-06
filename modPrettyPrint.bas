@@ -409,7 +409,7 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
   Dim TmpInBrackets As Boolean
   Dim TmpInBracketsCnt As Long
   Dim TmpInBraces As Boolean
-  Dim TmpInBracesCnt As Long
+  Dim TmpInBraceQuotes As Boolean
   Dim TmpSimpleArgText As String
   Dim TmpFuncName As String
   Dim TmpFuncNameCharCnt As Long
@@ -423,6 +423,7 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
   TmpInSingleQuotes = False
   TmpInBrackets = False
   TmpInBraces = False
+  TmpInBraceQuotes = False
   TmpCnt = 1
   Set TmpStk = New CStack
   For TmpCnt = 1 To Len(TmpFrmStr)
@@ -446,12 +447,25 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
         TmpInBrackets = (TmpInBracketsCnt > 0)
       End If
 
-    ElseIf TmpInBraces Then 'Array literal, e.g. {"A","B","C"} -- Excel silently
-
-      TmpResult = TmpResult & TmpChar 'collapses these back to one line, so never break inside one.
-      If TmpChar = "}" Then
-        Dec TmpInBracesCnt
-        TmpInBraces = (TmpInBracesCnt > 0)
+    ElseIf TmpInBraces Then 'Array literal, e.g. {"A","B","C"}. Excel silently
+                            'collapses these back to one line, so never break
+                            'inside one -- but a space after each real comma
+                            'is safe and reads better. Arrays can't nest in
+                            'Excel, so a local quote flag is enough to tell a
+                            'real separator comma from one inside a quoted
+                            'element (e.g. the comma in {"A,B","C"}).
+      If TmpChar = """" Then
+        TmpInBraceQuotes = Not TmpInBraceQuotes
+        TmpResult = TmpResult & TmpChar
+      ElseIf TmpInBraceQuotes Then
+        TmpResult = TmpResult & TmpChar
+      ElseIf TmpChar = "," Then
+        TmpResult = TmpResult & ", "
+      ElseIf TmpChar = "}" Then
+        TmpInBraces = False
+        TmpResult = TmpResult & TmpChar
+      Else
+        TmpResult = TmpResult & TmpChar
       End If
 
     Else
@@ -508,8 +522,8 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
           TmpResult = TmpResult & TmpChar
 
         Case "{"
-          Inc TmpInBracesCnt
           TmpInBraces = True
+          TmpInBraceQuotes = False
           TmpResult = TmpResult & TmpChar
 
         Case Else
@@ -558,9 +572,10 @@ Private Sub TestPrettyPrintWouldChangeFormula()
   ' Complex, already pretty-printed: idempotent, nothing left to do.
   TestPrettyPrintWouldChangeFormulaHelper PrettyPrint("=IF(A1>0,SUM(A1:A10),0)"), False
 
-  ' Array literal, already pretty-printed: must stay idempotent -- {} content
-  ' must never get a line break, since Excel silently collapses it back to
-  ' one line and would otherwise make this loop forever.
+  ' Array literal, already pretty-printed: must stay idempotent. {} content
+  ' gets ", " after each real comma (Excel is fine with spaces there) but
+  ' must never get a line break (Excel silently collapses those back to one
+  ' line, which would otherwise make this loop forever).
   TestPrettyPrintWouldChangeFormulaHelper _
     PrettyPrint("=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"), False
 End Sub
@@ -623,8 +638,8 @@ Private Sub TestPrettyPrint()
   TestPrettyPrintHelper "=SUM([@[Revenue, Total]])"
   TestPrettyPrintHelper "=SUM([@[Total (Net)]])"
 
-  'Array literal must never get a line break inside it -- Excel silently
-  'collapses {} back to one line, which would otherwise break idempotence.
+  'Array literal: real commas get ", " like everywhere else, but must never
+  'get a line break -- Excel silently collapses {} back to one line.
   TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"
 
   TestPairArgPostProcess
