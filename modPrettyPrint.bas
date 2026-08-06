@@ -408,6 +408,8 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
   Dim TmpFrmStr As String
   Dim TmpInBrackets As Boolean
   Dim TmpInBracketsCnt As Long
+  Dim TmpInBraces As Boolean
+  Dim TmpInBracesCnt As Long
   Dim TmpSimpleArgText As String
   Dim TmpFuncName As String
   Dim TmpFuncNameCharCnt As Long
@@ -420,6 +422,7 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
   TmpInQuotes = False
   TmpInSingleQuotes = False
   TmpInBrackets = False
+  TmpInBraces = False
   TmpCnt = 1
   Set TmpStk = New CStack
   For TmpCnt = 1 To Len(TmpFrmStr)
@@ -441,6 +444,14 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
       If TmpChar = "]" Then
         Dec TmpInBracketsCnt
         TmpInBrackets = (TmpInBracketsCnt > 0)
+      End If
+
+    ElseIf TmpInBraces Then 'Array literal, e.g. {"A","B","C"} -- Excel silently
+
+      TmpResult = TmpResult & TmpChar 'collapses these back to one line, so never break inside one.
+      If TmpChar = "}" Then
+        Dec TmpInBracesCnt
+        TmpInBraces = (TmpInBracesCnt > 0)
       End If
 
     Else
@@ -496,6 +507,11 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
           TmpInBrackets = True
           TmpResult = TmpResult & TmpChar
 
+        Case "{"
+          Inc TmpInBracesCnt
+          TmpInBraces = True
+          TmpResult = TmpResult & TmpChar
+
         Case Else
           TmpResult = TmpResult & TmpChar
       End Select
@@ -541,6 +557,12 @@ Private Sub TestPrettyPrintWouldChangeFormula()
 
   ' Complex, already pretty-printed: idempotent, nothing left to do.
   TestPrettyPrintWouldChangeFormulaHelper PrettyPrint("=IF(A1>0,SUM(A1:A10),0)"), False
+
+  ' Array literal, already pretty-printed: must stay idempotent -- {} content
+  ' must never get a line break, since Excel silently collapses it back to
+  ' one line and would otherwise make this loop forever.
+  TestPrettyPrintWouldChangeFormulaHelper _
+    PrettyPrint("=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"), False
 End Sub
 
 
@@ -600,6 +622,10 @@ Private Sub TestPrettyPrint()
   'one line -- bracket-tracking must protect them like quotes do.
   TestPrettyPrintHelper "=SUM([@[Revenue, Total]])"
   TestPrettyPrintHelper "=SUM([@[Total (Net)]])"
+
+  'Array literal must never get a line break inside it -- Excel silently
+  'collapses {} back to one line, which would otherwise break idempotence.
+  TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"
 
   TestPairArgPostProcess
 
