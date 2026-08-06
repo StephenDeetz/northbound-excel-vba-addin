@@ -28,12 +28,12 @@ Public Function GetAppDataDir() As String
   GetAppDataDir = Environ$("AppData")
 End Function
 
-Function DirExists(ByVal AFileNameStr As String) As Boolean
+Public Function DirExists(ByVal AFileNameStr As String) As Boolean
   On Error Resume Next
   DirExists = ((GetAttr(AFileNameStr) And vbDirectory) = vbDirectory)
 End Function
 
-Function IncludeTrailingBackslash(ADirStr As String)
+Public Function IncludeTrailingBackslash(ByVal ADirStr As String) As String
   If Right$(ADirStr, 1) <> "\" Then
     IncludeTrailingBackslash = ADirStr & "\"
   Else
@@ -41,7 +41,7 @@ Function IncludeTrailingBackslash(ADirStr As String)
   End If
 End Function
 
-Public Function StrCnt(AStr As String, ASubStr As String) As Long
+Public Function StrCnt(ByVal AStr As String, ByVal ASubStr As String) As Long
   Dim TmpPos As Long
   StrCnt = 0
 
@@ -258,7 +258,7 @@ Public Function ShtNameRequiresSingleQuotes(ByVal AShtNameStr As String) As Bool
 
   Const kSpecialChars As String = " -',:[]()!&^%$#@{}=+<>?/\"
   Dim TmpChar As String
-  Dim TmpCnt As Integer
+  Dim TmpCnt As Long
 
   ShtNameRequiresSingleQuotes = False
 

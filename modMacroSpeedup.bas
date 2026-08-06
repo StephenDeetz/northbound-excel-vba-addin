@@ -265,7 +265,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: TestMacroSpeedup - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -308,7 +308,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: Test_MacroSpeedup_AllItemsPushPop - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -352,7 +352,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: Test_MacroSpeedup_NestedDepth - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -379,7 +379,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: Test_MacroSpeedup_ManualBaseline - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -420,7 +420,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: Test_MacroSpeedup_Interleaved - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -476,7 +476,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: Test_MacroSpeedup_IdempotentPush - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -518,7 +518,7 @@ Finally:
 OnError:
   MacroSpeedup msClear
   TestLogLine "CRASHED: Test_MacroSpeedup_MidScopeOverride - " & err.Description
-  On Error GoTo 0
+  err.Clear
   Resume Finally
 End Sub
 
@@ -560,7 +560,7 @@ OnError:
   PPResult "ErrorPath.Restore.Cursor", CursorStr(TmpBaselineCursor), CursorStr(Application.Cursor)
 
 Finally:
-  On Error GoTo 0
+  err.Clear
 End Sub
 
 

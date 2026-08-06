@@ -30,7 +30,7 @@ Public Function WbkExportVBAModules(ByVal AWbk As Workbook, _
     Exit Function
   End If
   
-  On Error GoTo ErrHandler
+  On Error GoTo OnError
   
   TmpFPathStr = ADirStr
   If Right$(TmpFPathStr, 1) <> "\" Then TmpFPathStr = TmpFPathStr & "\"
@@ -70,10 +70,11 @@ Public Function WbkExportVBAModules(ByVal AWbk As Workbook, _
   WbkExportVBAModules = TmpCnt
   Exit Function
 
-ErrHandler:
+OnError:
   If IsMissing(AErrStr) = False Then
     AErrStr = "Error " & err.Number & ": " & err.Description
   End If
+  err.Clear
 End Function
 
 Private Sub TestWbkExportVBAModules()

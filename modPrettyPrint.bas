@@ -54,7 +54,7 @@ End Function
 
 '1st Char (
 Private Function FindMatchingCloseParen(ByVal AOpenParenStart As Long, ByVal AStr As String) As Long
- Dim TmpInsideQuotes As Boolean
+  Dim TmpInsideQuotes As Boolean
   Dim i As Long
   Dim TmpMatchCnt As Long '( goes up, ) down. When 0, found closing paren.
   
@@ -70,7 +70,7 @@ Private Function FindMatchingCloseParen(ByVal AOpenParenStart As Long, ByVal ASt
   TmpInsideQuotes = False
   
   For i = AOpenParenStart + 1 To Len(AStr)
-    If Mid(AStr, i, 1) = """" Then
+    If Mid$(AStr, i, 1) = """" Then
       TmpInsideQuotes = Not TmpInsideQuotes
     ElseIf Not TmpInsideQuotes Then
       If Mid$(AStr, i, 1) = "(" Then
@@ -997,8 +997,8 @@ OnError:
   Debug.Print AFrmStr & vbCrLf
   Debug.Print "--------------------------------------------------------" & vbCrLf
 
-  On Error GoTo 0
-  
+  err.Clear
+
   Resume Finally
 End Function
 

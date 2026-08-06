@@ -57,7 +57,7 @@ Private Function ResolveTestLogPathStr() As String
   ResolveTestLogPathStr = vbNullString
 
   TmpDirStr = AppDataFileReadStr(kTestDirPathFile)
-  If LenB(TmpDirStr) = 0 Then TmpDirStr = GetFolder(ThisWorkbook.Path)
+  If LenB(TmpDirStr) = 0 Then TmpDirStr = GetFolder(ActiveWorkbook.Path)
   If LenB(TmpDirStr) = 0 Then Exit Function
 
   AppDataFileWriteStr TmpDirStr, kTestDirPathFile
@@ -73,7 +73,7 @@ Public Function ResolveGoldenFilePathStr() As String
   ResolveGoldenFilePathStr = vbNullString
 
   TmpDirStr = AppDataFileReadStr(kGoldenDirPathFile)
-  If LenB(TmpDirStr) = 0 Then TmpDirStr = GetFolder(ThisWorkbook.Path)
+  If LenB(TmpDirStr) = 0 Then TmpDirStr = GetFolder(ActiveWorkbook.Path)
   If LenB(TmpDirStr) = 0 Then Exit Function
 
   AppDataFileWriteStr TmpDirStr, kGoldenDirPathFile
