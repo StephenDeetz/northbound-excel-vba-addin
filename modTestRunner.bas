@@ -17,8 +17,12 @@ Option Explicit
 '                                         ' remembers it via NBPub_TestDir.txt)
 '
 '   Any individual Test* sub still works standalone exactly as before -- e.g.
-'   running TestPrettyPrint directly from the Immediate window omits the
-'   optional ATestFilePathStr argument, which falls back to Debug.Print.
+'   running TestPrettyPrint directly from the Immediate window (or via F5 in
+'   the VBE, since Test* subs take no arguments) falls back to Debug.Print.
+'   TestLogLine decides Debug.Print vs. file-append by checking mTestFilePathStr,
+'   a module-level flag RunAllTests sets for the duration of its run -- Test*
+'   subs used to take this as an optional argument, but that made VBA treat
+'   them as "not runnable with F5" (VBA's F5/Run only works parameter-free).
 ' ==========================================================================================
 
 Private Const kTestDirPathFile As String = "NBPub_TestDir.txt"
@@ -27,17 +31,20 @@ Private Const kTestResultsFileName As String = "TestResults.txt"
 Private Const kGoldenDirPathFile As String = "NBPub_GoldenDir.txt"
 Private Const kGoldenFileName As String = "PrettyPrintGolden.txt"
 
-'Writes ALine to ATestFilePathStr if given, else to the Immediate window.
-Public Sub TestLogLine(ByVal ALine As String, Optional ByVal ATestFilePathStr As String = vbNullString)
+Private mTestFilePathStr As String 'Set by RunAllTests for its duration; vbNullString otherwise.
+
+'Writes ALine to the file RunAllTests is currently targeting, or the
+'Immediate window if this Test* sub is running standalone.
+Public Sub TestLogLine(ByVal ALine As String)
   Dim TmpFileNbr As Integer
 
-  If LenB(ATestFilePathStr) = 0 Then
+  If LenB(mTestFilePathStr) = 0 Then
     Debug.Print ALine
     Exit Sub
   End If
 
   TmpFileNbr = FreeFile
-  Open ATestFilePathStr For Append As #TmpFileNbr
+  Open mTestFilePathStr For Append As #TmpFileNbr
   Print #TmpFileNbr, ALine
   Close #TmpFileNbr
 End Sub
@@ -76,18 +83,18 @@ End Function
 'Logs a section header, runs ATestNameStr via Application.Run (works on
 'Private subs in other modules), and traps any crash so one bad test can't
 'halt the rest of the run or leave Excel state stuck mid-test.
-Private Sub RunOneTest(ByVal ATestNameStr As String, ByVal ATestFilePathStr As String)
-  TestLogLine "===== " & ATestNameStr & " =====", ATestFilePathStr
+Private Sub RunOneTest(ByVal ATestNameStr As String)
+  TestLogLine "===== " & ATestNameStr & " ====="
 
   On Error Resume Next
-  Application.Run ATestNameStr, ATestFilePathStr
+  Application.Run ATestNameStr
   If err.Number <> 0 Then
-    TestLogLine "CRASHED: " & ATestNameStr & " - " & err.Description, ATestFilePathStr
+    TestLogLine "CRASHED: " & ATestNameStr & " - " & err.Description
     err.Clear
   End If
   On Error GoTo 0
 
-  TestLogLine vbNullString, ATestFilePathStr 'Blank separator line between sections.
+  TestLogLine vbNullString 'Blank separator line between sections.
 End Sub
 
 Public Sub RunAllTests()
@@ -98,35 +105,41 @@ Public Sub RunAllTests()
     If Dir$(TmpPathStr) <> vbNullString Then Kill TmpPathStr
   End If
 
+  mTestFilePathStr = TmpPathStr
+  On Error GoTo Finally
+
   ' modSmallFunctions.bas
-  RunOneTest "TestShortenFormula", TmpPathStr
-  RunOneTest "TestStrCnt", TmpPathStr
-  RunOneTest "TestRemoveQuotedSections", TmpPathStr
-  RunOneTest "TestPosSkipQuotedSections", TmpPathStr
-  RunOneTest "TestReplaceSkipQuotedSections", TmpPathStr
-  RunOneTest "TestShtNameRequiresSingleQuotes", TmpPathStr
-  RunOneTest "TestShtFormulaNameStr", TmpPathStr
+  RunOneTest "TestShortenFormula"
+  RunOneTest "TestStrCnt"
+  RunOneTest "TestRemoveQuotedSections"
+  RunOneTest "TestPosSkipQuotedSections"
+  RunOneTest "TestReplaceSkipQuotedSections"
+  RunOneTest "TestShtNameRequiresSingleQuotes"
+  RunOneTest "TestShtFormulaNameStr"
 
   ' modAddOperatorWhiteSpace.bas
-  RunOneTest "TestIsMultiOperator", TmpPathStr
-  RunOneTest "TestIsSingleOperator", TmpPathStr
-  RunOneTest "TestAddOperatorWhiteSpace", TmpPathStr
-  RunOneTest "TestAddOperatorWhiteSpaceExact", TmpPathStr
-  RunOneTest "TestAddOperatorWhiteSpaceEdgeCases", TmpPathStr
+  RunOneTest "TestIsMultiOperator"
+  RunOneTest "TestIsSingleOperator"
+  RunOneTest "TestAddOperatorWhiteSpace"
+  RunOneTest "TestAddOperatorWhiteSpaceExact"
+  RunOneTest "TestAddOperatorWhiteSpaceEdgeCases"
   ' TestAddOperatorWhiteSpaceDoubleNeg -- excluded: different, non-standardized
   ' output format, with documented known-failing edge cases.
 
   ' modPrettyPrint.bas
-  RunOneTest "TestPrettyPrintWouldChangeFormula", TmpPathStr
-  RunOneTest "TestPrettyPrintExact", TmpPathStr
-  RunOneTest "TestGoldenEscapeStr", TmpPathStr
-  RunOneTest "TestGoldenReadEntries", TmpPathStr
-  RunOneTest "TestPrettyPrintGolden", TmpPathStr
+  RunOneTest "TestPrettyPrintWouldChangeFormula"
+  RunOneTest "TestPrettyPrintExact"
+  RunOneTest "TestGoldenEscapeStr"
+  RunOneTest "TestGoldenReadEntries"
+  RunOneTest "TestPrettyPrintGolden"
   ' TestPrettyPrint -- excluded: no PASS/FAIL, just Input/Answer for manual
   ' review; run it standalone from the Immediate window instead.
   ' TestPrettyPrintCaptureGolden -- excluded: deliberately mutates the golden
   ' file, never run automatically.
   ' TestCellSetFormula2Safe -- excluded: mutates ActiveSheet.Range("A1").
+
+Finally:
+  mTestFilePathStr = vbNullString 'Standalone Test* runs afterward fall back to Debug.Print.
 
   If LenB(TmpPathStr) > 0 Then
     MsgBox "Results written to:" & vbCrLf & TmpPathStr
