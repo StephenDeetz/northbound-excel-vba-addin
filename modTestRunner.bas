@@ -19,7 +19,7 @@ Option Explicit
 '   Any individual Test* sub still works standalone exactly as before -- e.g.
 '   running TestPrettyPrint directly from the Immediate window (or via F5 in
 '   the VBE, since Test* subs take no arguments) falls back to Debug.Print.
-'   TestLogLine decides Debug.Print vs. file-append by checking mTestFilePathStr,
+'   TestLogLine decides Debug.Print vs. file-append by checking TestFilePathStr,
 '   a module-level flag RunAllTests sets for the duration of its run -- Test*
 '   subs used to take this as an optional argument, but that made VBA treat
 '   them as "not runnable with F5" (VBA's F5/Run only works parameter-free).
@@ -31,20 +31,20 @@ Private Const kTestResultsFileName As String = "TestResults.txt"
 Private Const kGoldenDirPathFile As String = "NBPub_GoldenDir.txt"
 Private Const kGoldenFileName As String = "PrettyPrintGolden.txt"
 
-Private mTestFilePathStr As String 'Set by RunAllTests for its duration; vbNullString otherwise.
+Private TestFilePathStr As String 'Set by RunAllTests for its duration; vbNullString otherwise.
 
 'Writes ALine to the file RunAllTests is currently targeting, or the
 'Immediate window if this Test* sub is running standalone.
 Public Sub TestLogLine(ByVal ALine As String)
   Dim TmpFileNbr As Integer
 
-  If LenB(mTestFilePathStr) = 0 Then
+  If LenB(TestFilePathStr) = 0 Then
     Debug.Print ALine
     Exit Sub
   End If
 
   TmpFileNbr = FreeFile
-  Open mTestFilePathStr For Append As #TmpFileNbr
+  Open TestFilePathStr For Append As #TmpFileNbr
   Print #TmpFileNbr, ALine
   Close #TmpFileNbr
 End Sub
@@ -105,7 +105,7 @@ Public Sub RunAllTests()
     If Dir$(TmpPathStr) <> vbNullString Then Kill TmpPathStr
   End If
 
-  mTestFilePathStr = TmpPathStr
+  TestFilePathStr = TmpPathStr
   On Error GoTo Finally
 
   ' modSmallFunctions.bas
@@ -139,7 +139,7 @@ Public Sub RunAllTests()
   ' TestCellSetFormula2Safe -- excluded: mutates ActiveSheet.Range("A1").
 
 Finally:
-  mTestFilePathStr = vbNullString 'Standalone Test* runs afterward fall back to Debug.Print.
+  TestFilePathStr = vbNullString 'Standalone Test* runs afterward fall back to Debug.Print.
 
   If LenB(TmpPathStr) > 0 Then
     MsgBox "Results written to:" & vbCrLf & TmpPathStr

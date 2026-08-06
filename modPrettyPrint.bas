@@ -8,10 +8,10 @@ Private Const kGoldenInputMarker As String = ">>>>INPUT>>>>"
 Private Const kGoldenExpectedMarker As String = ">>>>EXPECTED>>>>"
 Private Const kGoldenEndMarker As String = ">>>>END>>>>"
 
-Private mGoldenModeStr As String     ' vbNullString (plain log), "CAPTURE", or "COMPARE"
-Private mGoldenEntries As Collection ' COMPARE mode: Array(InputStr, ExpectedStr) per entry, in case order
-Private mGoldenIdx As Long           ' COMPARE mode: count of entries consumed so far
-Private mGoldenCaptureStr As String  ' CAPTURE mode: accumulated file content
+Private GoldenModeStr As String     ' vbNullString (plain log), "CAPTURE", or "COMPARE"
+Private GoldenEntries As Collection ' COMPARE mode: Array(InputStr, ExpectedStr) per entry, in case order
+Private GoldenIdx As Long           ' COMPARE mode: count of entries consumed so far
+Private GoldenCaptureStr As String  ' CAPTURE mode: accumulated file content
 
 
 '----------------------------------------------------------------------'
@@ -633,7 +633,7 @@ Private Function GoldenUnescapeStr(ByVal AStr As String) As String
 End Function
 
 Private Sub GoldenWriteEntry(ByVal AInputStr As String, ByVal AExpectedStr As String)
-  mGoldenCaptureStr = mGoldenCaptureStr & _
+  GoldenCaptureStr = GoldenCaptureStr & _
     kGoldenInputMarker & vbCrLf & GoldenEscapeStr(AInputStr) & vbCrLf & _
     kGoldenExpectedMarker & vbCrLf & GoldenEscapeStr(AExpectedStr) & vbCrLf & _
     kGoldenEndMarker & vbCrLf
@@ -737,18 +737,18 @@ Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
 
   TmpAnswerStr = PrettyPrint(AFrmStr)
 
-  Select Case mGoldenModeStr
+  Select Case GoldenModeStr
     Case "CAPTURE"
       GoldenWriteEntry AFrmStr, TmpAnswerStr
 
     Case "COMPARE"
-      mGoldenIdx = mGoldenIdx + 1
-      If mGoldenIdx > mGoldenEntries.Count Then
+      GoldenIdx = GoldenIdx + 1
+      If GoldenIdx > GoldenEntries.Count Then
         TestLogLine AFrmStr & " | " & TmpAnswerStr & " | (no golden entry -- run TestPrettyPrintCaptureGolden) | FAIL"
         Exit Sub
       End If
 
-      TmpEntry = mGoldenEntries(mGoldenIdx)
+      TmpEntry = GoldenEntries(GoldenIdx)
       TmpExpectedStr = TmpEntry(1)
 
       TmpNoteStr = vbNullString
@@ -780,17 +780,17 @@ Public Sub TestPrettyPrintCaptureGolden()
             "Only continue if you've reviewed the current output (e.g. via TestPrettyPrint) and it's correct.", _
             vbOKCancel Or vbExclamation, "Capture Pretty Print Golden") <> vbOK Then Exit Sub
 
-  mGoldenModeStr = "CAPTURE"
-  mGoldenCaptureStr = vbNullString
+  GoldenModeStr = "CAPTURE"
+  GoldenCaptureStr = vbNullString
 
   RunPrettyPrintCases
 
   TmpFileNbr = FreeFile
   Open TmpPathStr For Output As #TmpFileNbr
-  Print #TmpFileNbr, mGoldenCaptureStr
+  Print #TmpFileNbr, GoldenCaptureStr
   Close #TmpFileNbr
 
-  mGoldenModeStr = vbNullString
+  GoldenModeStr = vbNullString
   MsgBox "Golden file captured:" & vbCrLf & TmpPathStr, vbInformation
 End Sub
 
@@ -801,29 +801,25 @@ Public Sub TestPrettyPrintGolden()
 
   TmpPathStr = ResolveGoldenFilePathStr()
 
-  mGoldenModeStr = "COMPARE"
-  Set mGoldenEntries = GoldenReadEntries(TmpPathStr)
-  mGoldenIdx = 0
+  GoldenModeStr = "COMPARE"
+  Set GoldenEntries = GoldenReadEntries(TmpPathStr)
+  GoldenIdx = 0
 
-  If mGoldenEntries.Count = 0 Then
+  If GoldenEntries.Count = 0 Then
     TestLogLine "NO GOLDEN FILE FOUND -- run TestPrettyPrintCaptureGolden first | FAIL"
-    mGoldenModeStr = vbNullString
+    GoldenModeStr = vbNullString
     Exit Sub
   End If
 
   RunPrettyPrintCases
 
-  If mGoldenIdx < mGoldenEntries.Count Then
-    TestLogLine CStr(mGoldenEntries.Count - mGoldenIdx) & " unused golden entries -- recapture after removing test cases | FAIL"
+  If GoldenIdx < GoldenEntries.Count Then
+    TestLogLine CStr(GoldenEntries.Count - GoldenIdx) & " unused golden entries -- recapture after removing test cases | FAIL"
   End If
 
-  mGoldenModeStr = vbNullString
+  GoldenModeStr = vbNullString
 End Sub
 
-Public Sub TestPrettyPrint()
-  ClearImmediateWindow
-  RunPrettyPrintCases
-End Sub
 
 Private Sub RunPrettyPrintCases()
   TestPrettyPrintHelper "=IF(A1>0, SUM((A1:B1) + (C1:D1)), ""Test,,"")" & vbCrLf & vbCrLf
@@ -846,7 +842,7 @@ Private Sub RunPrettyPrintCases()
   TestPrettyPrintHelper "=IF(A1 <> """", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")"
   TestPrettyPrintHelper "=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)"
   TestPrettyPrintHelper "=IF([@[Net Profit]] > 0, ""Profitable"", IF([@[Net Profit]] = 0, ""Break Even"", ""Loss""))"
-  TestPrettyPrintHelper "=INDIRECT(ADDRESS(A1, B1, 4))"
+  TestPrettyPrintHelper "=INDIRECT(ADDRESS(A1,B1,4))"
   TestPrettyPrintHelper "=SUM(SEQUENCE(5, 1, A1, 1) * B1)"
   TestPrettyPrintHelper "=LET(x, A1 + B1, y, x * 2, y - C1)"
 
@@ -880,6 +876,10 @@ Private Sub RunPrettyPrintCases()
 
 End Sub
 
+Public Sub TestPrettyPrint()
+  ClearImmediateWindow
+  RunPrettyPrintCases
+End Sub
 
 'Covers two bugs: (1) ResultStr* used to render blank instead of "0" for
 'zero counts, (2) *Rng used to return False (Error) when a range had no
@@ -1380,6 +1380,7 @@ Public Sub PrettyPrintActiveWbk()
 
   MsgBox TmpResultStr
 End Sub
+
 
 
 

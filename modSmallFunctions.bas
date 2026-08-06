@@ -490,34 +490,37 @@ Public Function AnySheetsProtected(ByVal AWkBook As Workbook) As Boolean
   Next TmpWorksheet
 End Function
 
-Function GetFolder(AStartFolderStr As String, Optional ByVal ATitleStr As Variant) As String
-    Dim Fldr As FileDialog
-    Dim sItem As String
-    Set Fldr = Application.FileDialog(msoFileDialogFolderPicker)
-    With Fldr
-        If IsMissing(ATitleStr) Then
-            .Title = "Select a Folder"
-        Else
-            .Title = ATitleStr
-        End If
-        
-        .AllowMultiSelect = False
+' Purpose: Show a folder picker, returning the chosen path, or vbNullString if canceled.
+Public Function GetFolder(ByVal AStartFolderStr As String, _
+                          Optional ByVal ATitleStr As Variant) As String
+  Dim TmpFldr As FileDialog
+  Dim TmpItemStr As String
 
-        If (AStartFolderStr <> vbNullString) And DirExists(AStartFolderStr) Then
-          If Right(AStartFolderStr, 1) = "\" Then
-            AStartFolderStr = Left(AStartFolderStr, Len(AStartFolderStr) - 1)
-          End If
-          .InitialFileName = AStartFolderStr & "\"
-        Else
-          .InitialFileName = Application.DefaultFilePath & "\"
-        End If
+  GetFolder = vbNullString
 
-        If .Show <> -1 Then GoTo NextCode
-        sItem = .SelectedItems(1)
-    End With
-NextCode:
-    GetFolder = sItem
-    Set Fldr = Nothing
+  Set TmpFldr = Application.FileDialog(msoFileDialogFolderPicker)
+  With TmpFldr
+    If IsMissing(ATitleStr) Then
+      .Title = "Select a Folder"
+    Else
+      .Title = ATitleStr
+    End If
+
+    .AllowMultiSelect = False
+
+    If (AStartFolderStr <> vbNullString) And DirExists(AStartFolderStr) Then
+      If Right$(AStartFolderStr, 1) = "\" Then
+        AStartFolderStr = Left$(AStartFolderStr, Len(AStartFolderStr) - 1)
+      End If
+      .InitialFileName = AStartFolderStr & "\"
+    Else
+      .InitialFileName = Application.DefaultFilePath & "\"
+    End If
+
+    If .Show = -1 Then TmpItemStr = .SelectedItems(1)
+  End With
+
+  GetFolder = TmpItemStr
 End Function
 
 
@@ -533,5 +536,6 @@ Public Sub OpenPathInExplorer(ByVal APathStr As String)
   
   Shell TmpStr, vbNormalFocus
 End Sub
+
 
 
