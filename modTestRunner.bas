@@ -80,6 +80,30 @@ Public Function ResolveAnswersFilePathStr() As String
   ResolveAnswersFilePathStr = IncludeTrailingBackslash(TmpDirStr) & kAnswersFileName
 End Function
 
+'Counts result lines in APathStr by their trailing "| PASS" / "| FAIL" marker.
+'(Header/section-title lines don't contain either substring, so they're
+'skipped without needing a separate "is this a result line" check.)
+Private Sub CountPassFail(ByVal APathStr As String, ByRef APassCnt As Long, ByRef AFailCnt As Long)
+  Dim TmpFileNbr As Integer
+  Dim TmpLine As String
+
+  APassCnt = 0
+  AFailCnt = 0
+  If Dir$(APathStr) = vbNullString Then Exit Sub
+
+  TmpFileNbr = FreeFile
+  Open APathStr For Input As #TmpFileNbr
+  Do Until EOF(TmpFileNbr)
+    Line Input #TmpFileNbr, TmpLine
+    If InStr(TmpLine, "| FAIL") > 0 Then
+      AFailCnt = AFailCnt + 1
+    ElseIf InStr(TmpLine, "| PASS") > 0 Then
+      APassCnt = APassCnt + 1
+    End If
+  Loop
+  Close #TmpFileNbr
+End Sub
+
 'Logs a section header, runs ATestNameStr via Application.Run (works on
 'Private subs in other modules), and traps any crash so one bad test can't
 'halt the rest of the run or leave Excel state stuck mid-test.
@@ -99,6 +123,9 @@ End Sub
 
 Public Sub RunAllTests()
   Dim TmpPathStr As String
+  Dim TmpPassCnt As Long
+  Dim TmpFailCnt As Long
+  Dim TmpSummaryStr As String
 
   TmpPathStr = ResolveTestLogPathStr()
   If LenB(TmpPathStr) > 0 Then
@@ -109,7 +136,7 @@ Public Sub RunAllTests()
   On Error GoTo Finally
 
   TestLogLine "Most tests log one line per case in a 4-part format:"
-  TestLogLine "  Input | Answer | Expected | PASS/FAIL"
+  TestLogLine "  Input | Answer | Expected | PASS or FAIL"
   TestLogLine "(some cases log multiple Input fields when the sub under test takes"
   TestLogLine "more than one argument, but Answer/Expected/PASS-FAIL are always the"
   TestLogLine "last 3.)"
@@ -155,10 +182,18 @@ Public Sub RunAllTests()
   ' file, never run automatically.
   ' TestCellSetFormula2Safe -- excluded: mutates ActiveSheet.Range("A1").
 
+  If LenB(TmpPathStr) > 0 Then
+    CountPassFail TmpPathStr, TmpPassCnt, TmpFailCnt
+    TmpSummaryStr = "PASS: " & TmpPassCnt & " | FAIL: " & TmpFailCnt
+
+    TestLogLine "===== SUMMARY ====="
+    TestLogLine TmpSummaryStr
+  End If
+
 Finally:
   TestFilePathStr = vbNullString 'Standalone Test* runs afterward fall back to Debug.Print.
 
   If LenB(TmpPathStr) > 0 Then
-    MsgBox "Results written to:" & vbCrLf & TmpPathStr
+    MsgBox "Results written to:" & vbCrLf & TmpPathStr & vbCrLf & vbCrLf & TmpSummaryStr
   End If
 End Sub
