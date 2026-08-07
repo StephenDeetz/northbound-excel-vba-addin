@@ -69,7 +69,7 @@
 =IF({{LF}}    [@[Net Profit]] > 0,{{LF}}    "Profitable",{{LF}}    IF([@[Net Profit]] = 0, "Break Even", "Loss"){{LF}})
 >>>>END>>>>
 >>>>INPUT>>>>
-=INDIRECT(ADDRESS(A1, B1, 4))
+=INDIRECT(ADDRESS(A1,B1,4))
 >>>>EXPECTED>>>>
 =INDIRECT(ADDRESS(A1, B1, 4))
 >>>>END>>>>

@@ -345,53 +345,22 @@ End Sub
 
 
 
-' Helper function to compare expected vs. actual results.
-' This is a very sweet test func look.
-Private Sub TestAddOperatorWhiteSpaceDoubleNegHelper(ByVal AFrmStr As String)
-  Dim TmpExpected As String
-  Dim TmpResult As String
-  Dim TmpMatch As Boolean
-
-  ' Expected output should match input, except for proper spacing
-  TmpExpected = AFrmStr
-  TmpResult = AddOperatorWhiteSpace(AFrmStr)
-  TmpMatch = (TmpResult = TmpExpected)
-
-  Debug.Print "Before: "; AFrmStr, "After: "; TmpResult, "Expected: "; TmpExpected, "Match: "; TmpMatch
-End Sub
-
-'Many of these fail. These are pretty small edge cases. And it's pretty print and won't break the formula.
+' "--" (double unary minus / boolean-to-number coercion, e.g. SUMPRODUCT's
+' --(condition)) never gets surrounding spaces added, in either the unary
+' ("=--C1") or binary/coercion ("=A1--B1") context -- the special-cased
+' branch for it in AddOperatorWhiteSpace only conditionally trims a
+' preceding space, unlike every other operator. Confirmed by running this
+' test standalone: all cases below are the actual, unchanged output.
 Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
-  Debug.Print "Testing AddOperatorWhiteSpace..."
-
-  ' Simple double negative with no space
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=--C1"
-
-  ' Double negative after addition
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=A1 + --B1"
-
-  ' Double negative after multiplication
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=A1 * --B1"
-
-  ' Double negative after division
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=A1 / --B1"
-
-  ' Double negative after exponentiation
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=A1 ^ --B1"
-
-  ' Double negative with parentheses
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=--(A1 + B1)"
-
-  ' Edge case: Spacing between operators should be preserved
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=A1--B1" ' Should become `=A1 -- B1`
-
-  ' Retain space before double negative inside IF
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=IF(A1 - --B1, TRUE, FALSE)"
-
-  ' Check equality with double negative
-  TestAddOperatorWhiteSpaceDoubleNegHelper "=IF(A1 = --B1, TRUE, FALSE)"
-
-  Debug.Print "TestAddOperatorWhiteSpace Complete."
+  TestAddOperatorWhiteSpaceExactHelper "=--C1", "=--C1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1 + --B1", "=A1 + --B1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1 * --B1", "=A1 * --B1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1 / --B1", "=A1 / --B1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1 ^ --B1", "=A1 ^ --B1"
+  TestAddOperatorWhiteSpaceExactHelper "=--(A1 + B1)", "=--(A1 + B1)"
+  TestAddOperatorWhiteSpaceExactHelper "=A1--B1", "=A1--B1"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1 - --B1, TRUE, FALSE)", "=IF(A1 - --B1, TRUE, FALSE)"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1 = --B1, TRUE, FALSE)", "=IF(A1 = --B1, TRUE, FALSE)"
 End Sub
 
 

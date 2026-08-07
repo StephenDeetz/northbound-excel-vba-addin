@@ -28,8 +28,8 @@ Option Explicit
 Private Const kTestDirPathFile As String = "NBPub_TestDir.txt"
 Private Const kTestResultsFileName As String = "TestResults.txt"
 
-Private Const kGoldenDirPathFile As String = "NBPub_GoldenDir.txt"
-Private Const kGoldenFileName As String = "PrettyPrintGolden.txt"
+Private Const kAnswersDirPathFile As String = "NBPub_AnswersDir.txt"
+Private Const kAnswersFileName As String = "PrettyPrintAnswers.txt"
 
 Private TestFilePathStr As String 'Set by RunAllTests for its duration; vbNullString otherwise.
 
@@ -64,20 +64,20 @@ Private Function ResolveTestLogPathStr() As String
   ResolveTestLogPathStr = IncludeTrailingBackslash(TmpDirStr) & kTestResultsFileName
 End Function
 
-'Remembered golden-file folder -- a separate remembered path from
+'Remembered answers-file folder -- a separate remembered path from
 'ResolveTestLogPathStr's, since this one must point at the git repo (the
-'golden file is a version-controlled fixture), not a scratch results folder.
-Public Function ResolveGoldenFilePathStr() As String
+'answers file is a version-controlled fixture), not a scratch results folder.
+Public Function ResolveAnswersFilePathStr() As String
   Dim TmpDirStr As String
 
-  ResolveGoldenFilePathStr = vbNullString
+  ResolveAnswersFilePathStr = vbNullString
 
-  TmpDirStr = AppDataFileReadStr(kGoldenDirPathFile)
+  TmpDirStr = AppDataFileReadStr(kAnswersDirPathFile)
   If LenB(TmpDirStr) = 0 Then TmpDirStr = GetFolder(ActiveWorkbook.Path)
   If LenB(TmpDirStr) = 0 Then Exit Function
 
-  AppDataFileWriteStr TmpDirStr, kGoldenDirPathFile
-  ResolveGoldenFilePathStr = IncludeTrailingBackslash(TmpDirStr) & kGoldenFileName
+  AppDataFileWriteStr TmpDirStr, kAnswersDirPathFile
+  ResolveAnswersFilePathStr = IncludeTrailingBackslash(TmpDirStr) & kAnswersFileName
 End Function
 
 'Logs a section header, runs ATestNameStr via Application.Run (works on
@@ -108,6 +108,13 @@ Public Sub RunAllTests()
   TestFilePathStr = TmpPathStr
   On Error GoTo Finally
 
+  TestLogLine "Most tests log one line per case in a 4-part format:"
+  TestLogLine "  Input | Answer | Expected | PASS/FAIL"
+  TestLogLine "(some cases log multiple Input fields when the sub under test takes"
+  TestLogLine "more than one argument, but Answer/Expected/PASS-FAIL are always the"
+  TestLogLine "last 3.)"
+  TestLogLine vbNullString
+
   ' modSmallFunctions.bas
   RunOneTest "TestShortenFormula"
   RunOneTest "TestStrCnt"
@@ -133,18 +140,18 @@ Public Sub RunAllTests()
   RunOneTest "TestAddOperatorWhiteSpace"
   RunOneTest "TestAddOperatorWhiteSpaceExact"
   RunOneTest "TestAddOperatorWhiteSpaceEdgeCases"
-  ' TestAddOperatorWhiteSpaceDoubleNeg -- excluded: different, non-standardized
-  ' output format, with documented known-failing edge cases.
+  RunOneTest "TestAddOperatorWhiteSpaceDoubleNeg"
 
   ' modPrettyPrint.bas
   RunOneTest "TestPrettyPrintWouldChangeFormula"
   RunOneTest "TestPrettyPrintExact"
-  RunOneTest "TestGoldenEscapeStr"
-  RunOneTest "TestGoldenReadEntries"
-  RunOneTest "TestPrettyPrintGolden"
+  RunOneTest "TestAnswersEscapeStr"
+  RunOneTest "TestAnswersReadEntries"
+  RunOneTest "TestPrettyPrintMatchAnswers"
+  ' Test functions explicitly skipped.
   ' TestPrettyPrint -- excluded: no PASS/FAIL, just Input/Answer for manual
   ' review; run it standalone from the Immediate window instead.
-  ' TestPrettyPrintCaptureGolden -- excluded: deliberately mutates the golden
+  ' TestPrettyPrintWriteAnswers -- excluded: deliberately mutates the answers
   ' file, never run automatically.
   ' TestCellSetFormula2Safe -- excluded: mutates ActiveSheet.Range("A1").
 

@@ -4,14 +4,14 @@ Option Explicit
 Private Const kSimpleArgTextLen = 50
 Private Const kSimpleArgCnt = 4
 
-Private Const kGoldenInputMarker As String = ">>>>INPUT>>>>"
-Private Const kGoldenExpectedMarker As String = ">>>>EXPECTED>>>>"
-Private Const kGoldenEndMarker As String = ">>>>END>>>>"
+Private Const kAnswersInputMarker As String = ">>>>INPUT>>>>"
+Private Const kAnswersExpectedMarker As String = ">>>>EXPECTED>>>>"
+Private Const kAnswersEndMarker As String = ">>>>END>>>>"
 
-Private GoldenModeStr As String     ' vbNullString (plain log), "CAPTURE", or "COMPARE"
-Private GoldenEntries As Collection ' COMPARE mode: Array(InputStr, ExpectedStr) per entry, in case order
-Private GoldenIdx As Long           ' COMPARE mode: count of entries consumed so far
-Private GoldenCaptureStr As String  ' CAPTURE mode: accumulated file content
+Private AnswersModeStr As String     ' vbNullString (plain log), "CAPTURE", or "COMPARE"
+Private AnswersEntries As Collection ' COMPARE mode: Array(InputStr, ExpectedStr) per entry, in case order
+Private AnswersIdx As Long           ' COMPARE mode: count of entries consumed so far
+Private AnswersCaptureStr As String  ' CAPTURE mode: accumulated file content
 
 
 '----------------------------------------------------------------------'
@@ -601,18 +601,18 @@ Private Sub TestPrettyPrintExact()
 End Sub
 
 
-' -- Golden-file comparison ----------------------------------------------------
+' -- Answers-file comparison ----------------------------------------------------
 '
 ' RunPrettyPrintCases below has no stored "expected" value per case -- it just
 ' logs Input/Answer for visual review (TestPrettyPrint) with no PASS/FAIL.
-' TestPrettyPrintGolden reruns the exact same case list but checks each Answer
-' against a recorded Expected value, so it can report real PASS/FAIL like
-' every other test wired into modTestRunner's RunAllTests.
+' TestPrettyPrintMatchAnswers reruns the exact same case list but checks each
+' Answer against a recorded Expected value, so it can report real PASS/FAIL
+' like every other test wired into modTestRunner's RunAllTests.
 '
-' Recorded values live in PrettyPrintGolden.txt, a plain-text fixture meant to
+' Recorded values live in PrettyPrintAnswers.txt, a plain-text fixture meant to
 ' be version-controlled alongside the code (see modTestRunner.
-' ResolveGoldenFilePathStr) -- so a change in expected output shows up in git
-' diff like any other intentional behavior change. TestPrettyPrintCaptureGolden
+' ResolveAnswersFilePathStr) -- so a change in expected output shows up in git
+' diff like any other intentional behavior change. TestPrettyPrintWriteAnswers
 ' regenerates it from the current PrettyPrint output; run it deliberately,
 ' after reviewing the output (e.g. via TestPrettyPrint), never automatically.
 '
@@ -620,74 +620,74 @@ End Sub
 ' CR/LF -> {{CRLF}}/{{LF}}) so the file format is a fixed 5-line record and
 ' reading it back needs no multi-line accumulation logic.
 '
-' (kGolden* consts and mGolden* module vars are declared in the Declarations
+' (kAnswers* consts and mAnswers* module vars are declared in the Declarations
 ' section at the top of this module -- VBA requires that; see the compile
 ' error this caused when they were declared here instead.)
 
-Private Function GoldenEscapeStr(ByVal AStr As String) As String
-  GoldenEscapeStr = Replace(Replace(AStr, vbCrLf, "{{CRLF}}"), vbLf, "{{LF}}")
+Private Function AnswersEscapeStr(ByVal AStr As String) As String
+  AnswersEscapeStr = Replace(Replace(AStr, vbCrLf, "{{CRLF}}"), vbLf, "{{LF}}")
 End Function
 
-Private Function GoldenUnescapeStr(ByVal AStr As String) As String
-  GoldenUnescapeStr = Replace(Replace(AStr, "{{CRLF}}", vbCrLf), "{{LF}}", vbLf)
+Private Function AnswersUnescapeStr(ByVal AStr As String) As String
+  AnswersUnescapeStr = Replace(Replace(AStr, "{{CRLF}}", vbCrLf), "{{LF}}", vbLf)
 End Function
 
-Private Sub GoldenWriteEntry(ByVal AInputStr As String, ByVal AExpectedStr As String)
-  GoldenCaptureStr = GoldenCaptureStr & _
-    kGoldenInputMarker & vbCrLf & GoldenEscapeStr(AInputStr) & vbCrLf & _
-    kGoldenExpectedMarker & vbCrLf & GoldenEscapeStr(AExpectedStr) & vbCrLf & _
-    kGoldenEndMarker & vbCrLf
+Private Sub AnswersWriteEntry(ByVal AInputStr As String, ByVal AExpectedStr As String)
+  AnswersCaptureStr = AnswersCaptureStr & _
+    kAnswersInputMarker & vbCrLf & AnswersEscapeStr(AInputStr) & vbCrLf & _
+    kAnswersExpectedMarker & vbCrLf & AnswersEscapeStr(AExpectedStr) & vbCrLf & _
+    kAnswersEndMarker & vbCrLf
 End Sub
 
 'Fixed 5-line records (input marker, input, expected marker, expected, end
 'marker) -- read literally, no state machine needed since escaping guarantees
 'each field is exactly one physical line.
-Private Function GoldenReadEntries(ByVal APathStr As String) As Collection
+Private Function AnswersReadEntries(ByVal APathStr As String) As Collection
   Dim TmpFileNbr As Integer
   Dim TmpMarkerLine As String
   Dim TmpInputStr As String
   Dim TmpExpectedStr As String
 
-  Set GoldenReadEntries = New Collection
+  Set AnswersReadEntries = New Collection
   If Dir$(APathStr) = vbNullString Then Exit Function
 
   TmpFileNbr = FreeFile
   Open APathStr For Input As #TmpFileNbr
   Do Until EOF(TmpFileNbr)
     Line Input #TmpFileNbr, TmpMarkerLine
-    If TmpMarkerLine = kGoldenInputMarker Then
+    If TmpMarkerLine = kAnswersInputMarker Then
       Line Input #TmpFileNbr, TmpInputStr
       Line Input #TmpFileNbr, TmpMarkerLine 'expected marker, unused
       Line Input #TmpFileNbr, TmpExpectedStr
       Line Input #TmpFileNbr, TmpMarkerLine 'end marker, unused
-      GoldenReadEntries.Add Array(GoldenUnescapeStr(TmpInputStr), GoldenUnescapeStr(TmpExpectedStr))
+      AnswersReadEntries.Add Array(AnswersUnescapeStr(TmpInputStr), AnswersUnescapeStr(TmpExpectedStr))
     End If
   Loop
   Close #TmpFileNbr
 End Function
 
-Private Sub TestGoldenEscapeStrHelper(ByVal AStr As String, ByVal AExpectedEscapedStr As String)
+Private Sub TestAnswersEscapeStrHelper(ByVal AStr As String, ByVal AExpectedEscapedStr As String)
   Dim TmpEscapedStr As String
   Dim TmpRoundTripStr As String
   Dim TmpPassFailStr As String
 
-  TmpEscapedStr = GoldenEscapeStr(AStr)
-  TmpRoundTripStr = GoldenUnescapeStr(TmpEscapedStr)
+  TmpEscapedStr = AnswersEscapeStr(AStr)
+  TmpRoundTripStr = AnswersUnescapeStr(TmpEscapedStr)
   TmpPassFailStr = IIf(TmpEscapedStr = AExpectedEscapedStr And TmpRoundTripStr = AStr, "PASS", "FAIL")
 
   TestLogLine TmpEscapedStr & " | " & AExpectedEscapedStr & " | " & TmpPassFailStr
 End Sub
 
-Private Sub TestGoldenEscapeStr()
-  TestGoldenEscapeStrHelper "=SUM(A1:A10)", "=SUM(A1:A10)"
-  TestGoldenEscapeStrHelper "=CHOOSE(" & vbLf & "    A1)", "=CHOOSE({{LF}}    A1)"
-  TestGoldenEscapeStrHelper "=A1" & vbCrLf & vbCrLf, "=A1{{CRLF}}{{CRLF}}"
+Private Sub TestAnswersEscapeStr()
+  TestAnswersEscapeStrHelper "=SUM(A1:A10)", "=SUM(A1:A10)"
+  TestAnswersEscapeStrHelper "=CHOOSE(" & vbLf & "    A1)", "=CHOOSE({{LF}}    A1)"
+  TestAnswersEscapeStrHelper "=A1" & vbCrLf & vbCrLf, "=A1{{CRLF}}{{CRLF}}"
 End Sub
 
-'Hand-builds a 2-record golden file (mirroring GoldenWriteEntry's format) and
-'checks GoldenReadEntries parses both records, including one whose fields
+'Hand-builds a 2-record answers file (mirroring AnswersWriteEntry's format) and
+'checks AnswersReadEntries parses both records, including one whose fields
 'contain escaped CRLF/LF sequences, back to their original unescaped values.
-Private Sub TestGoldenReadEntries()
+Private Sub TestAnswersReadEntries()
   Dim TmpPathStr As String
   Dim TmpFileNbr As Integer
   Dim TmpEntries As Collection
@@ -695,7 +695,7 @@ Private Sub TestGoldenReadEntries()
   Dim TmpEntry2 As Variant
   Dim TmpPassFailStr As String
 
-  TmpPathStr = Environ$("TEMP") & "\NBPub_GoldenReadEntriesTest.txt"
+  TmpPathStr = Environ$("TEMP") & "\NBPub_AnswersReadEntriesTest.txt"
 
   TmpFileNbr = FreeFile
   Open TmpPathStr For Output As #TmpFileNbr
@@ -711,7 +711,7 @@ Private Sub TestGoldenReadEntries()
   Print #TmpFileNbr, ">>>>END>>>>"
   Close #TmpFileNbr
 
-  Set TmpEntries = GoldenReadEntries(TmpPathStr)
+  Set TmpEntries = AnswersReadEntries(TmpPathStr)
   Kill TmpPathStr
 
   TmpPassFailStr = "PASS"
@@ -725,7 +725,7 @@ Private Sub TestGoldenReadEntries()
     If TmpEntry2(1) <> "=A1" & vbLf & vbLf Then TmpPassFailStr = "FAIL"
   End If
 
-  TestLogLine "GoldenReadEntries 2-record parse | " & TmpPassFailStr
+  TestLogLine "AnswersReadEntries 2-record parse | " & TmpPassFailStr
 End Sub
 
 Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
@@ -737,22 +737,22 @@ Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
 
   TmpAnswerStr = PrettyPrint(AFrmStr)
 
-  Select Case GoldenModeStr
+  Select Case AnswersModeStr
     Case "CAPTURE"
-      GoldenWriteEntry AFrmStr, TmpAnswerStr
+      AnswersWriteEntry AFrmStr, TmpAnswerStr
 
     Case "COMPARE"
-      GoldenIdx = GoldenIdx + 1
-      If GoldenIdx > GoldenEntries.Count Then
-        TestLogLine AFrmStr & " | " & TmpAnswerStr & " | (no golden entry -- run TestPrettyPrintCaptureGolden) | FAIL"
+      AnswersIdx = AnswersIdx + 1
+      If AnswersIdx > AnswersEntries.Count Then
+        TestLogLine AFrmStr & " | " & TmpAnswerStr & " | (no answer entry -- run TestPrettyPrintWriteAnswers) | FAIL"
         Exit Sub
       End If
 
-      TmpEntry = GoldenEntries(GoldenIdx)
+      TmpEntry = AnswersEntries(AnswersIdx)
       TmpExpectedStr = TmpEntry(1)
 
       TmpNoteStr = vbNullString
-      If CStr(TmpEntry(0)) <> AFrmStr Then TmpNoteStr = " [GOLDEN INPUT MISMATCH -- recapture]"
+      If CStr(TmpEntry(0)) <> AFrmStr Then TmpNoteStr = " [ANSWERS INPUT MISMATCH -- recapture]"
 
       TmpPassFailStr = IIf(TmpAnswerStr = TmpExpectedStr, "PASS", "FAIL")
       TestLogLine AFrmStr & " | " & TmpAnswerStr & " | " & TmpExpectedStr & " | " & TmpPassFailStr & TmpNoteStr
@@ -764,60 +764,60 @@ Private Sub TestPrettyPrintHelper(ByVal AFrmStr As String)
   End Select
 End Sub
 
-'Regenerates PrettyPrintGolden.txt from the current PrettyPrint output for
+'Regenerates PrettyPrintAnswers.txt from the current PrettyPrint output for
 'every case in RunPrettyPrintCases. Run deliberately, after reviewing the
 'actual output (e.g. via TestPrettyPrint) -- this overwrites the fixture that
-'TestPrettyPrintGolden checks future changes against.
-Public Sub TestPrettyPrintCaptureGolden()
+'TestPrettyPrintMatchAnswers checks future changes against.
+Public Sub TestPrettyPrintWriteAnswers()
   Dim TmpPathStr As String
   Dim TmpFileNbr As Integer
 
-  TmpPathStr = ResolveGoldenFilePathStr()
+  TmpPathStr = ResolveAnswersFilePathStr()
   If LenB(TmpPathStr) = 0 Then Exit Sub
 
-  If MsgBox("This overwrites the golden file used to catch Pretty Print regressions:" & vbCrLf & _
+  If MsgBox("This overwrites the answers file used to catch Pretty Print regressions:" & vbCrLf & _
             TmpPathStr & vbCrLf & vbCrLf & _
             "Only continue if you've reviewed the current output (e.g. via TestPrettyPrint) and it's correct.", _
-            vbOKCancel Or vbExclamation, "Capture Pretty Print Golden") <> vbOK Then Exit Sub
+            vbOKCancel Or vbExclamation, "Write Pretty Print Answers") <> vbOK Then Exit Sub
 
-  GoldenModeStr = "CAPTURE"
-  GoldenCaptureStr = vbNullString
+  AnswersModeStr = "CAPTURE"
+  AnswersCaptureStr = vbNullString
 
   RunPrettyPrintCases
 
   TmpFileNbr = FreeFile
   Open TmpPathStr For Output As #TmpFileNbr
-  Print #TmpFileNbr, GoldenCaptureStr
+  Print #TmpFileNbr, AnswersCaptureStr
   Close #TmpFileNbr
 
-  GoldenModeStr = vbNullString
-  MsgBox "Golden file captured:" & vbCrLf & TmpPathStr, vbInformation
+  AnswersModeStr = vbNullString
+  MsgBox "Answers file written:" & vbCrLf & TmpPathStr, vbInformation
 End Sub
 
-'Same case list as TestPrettyPrint, but checked against PrettyPrintGolden.txt
+'Same case list as TestPrettyPrint, but checked against PrettyPrintAnswers.txt
 'for real PASS/FAIL -- this is the one wired into RunAllTests.
-Public Sub TestPrettyPrintGolden()
+Public Sub TestPrettyPrintMatchAnswers()
   Dim TmpPathStr As String
 
-  TmpPathStr = ResolveGoldenFilePathStr()
+  TmpPathStr = ResolveAnswersFilePathStr()
 
-  GoldenModeStr = "COMPARE"
-  Set GoldenEntries = GoldenReadEntries(TmpPathStr)
-  GoldenIdx = 0
+  AnswersModeStr = "COMPARE"
+  Set AnswersEntries = AnswersReadEntries(TmpPathStr)
+  AnswersIdx = 0
 
-  If GoldenEntries.Count = 0 Then
-    TestLogLine "NO GOLDEN FILE FOUND -- run TestPrettyPrintCaptureGolden first | FAIL"
-    GoldenModeStr = vbNullString
+  If AnswersEntries.Count = 0 Then
+    TestLogLine "NO ANSWERS FILE FOUND -- run TestPrettyPrintWriteAnswers first | FAIL"
+    AnswersModeStr = vbNullString
     Exit Sub
   End If
 
   RunPrettyPrintCases
 
-  If GoldenIdx < GoldenEntries.Count Then
-    TestLogLine CStr(GoldenEntries.Count - GoldenIdx) & " unused golden entries -- recapture after removing test cases | FAIL"
+  If AnswersIdx < AnswersEntries.Count Then
+    TestLogLine CStr(AnswersEntries.Count - AnswersIdx) & " unused answer entries -- rewrite after removing test cases | FAIL"
   End If
 
-  GoldenModeStr = vbNullString
+  AnswersModeStr = vbNullString
 End Sub
 
 
