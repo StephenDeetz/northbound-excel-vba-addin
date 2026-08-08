@@ -47,6 +47,194 @@ End Function
 
 
 '----------------------------------------------------------------------'
+'              Quoted-Section-Aware String Helpers                     '
+'----------------------------------------------------------------------'
+' Moved from modSmallFunctions.bas -- used only by this module's Core
+' Functions below.
+
+Public Function RemoveQuotedSections(ByVal AStr As String) As String
+  Dim TmpResult As String
+  Dim TmpInsideQuotes As Boolean
+  Dim TmpInBracketsCnt As Long
+  Dim TmpInBraces As Boolean
+  Dim TmpChar As String
+  Dim TmpIsDelimiter As Boolean
+  Dim i As Long
+
+  TmpResult = vbNullString
+  TmpInsideQuotes = False
+
+  For i = 1 To Len(AStr)
+    TmpChar = Mid$(AStr, i, 1)
+    TmpIsDelimiter = False
+
+    If TmpChar = """" Then
+      TmpInsideQuotes = Not TmpInsideQuotes
+      TmpIsDelimiter = True
+    ElseIf Not TmpInsideQuotes And TmpChar = "[" Then
+      TmpInBracketsCnt = TmpInBracketsCnt + 1
+      TmpIsDelimiter = True
+    ElseIf Not TmpInsideQuotes And TmpChar = "]" And TmpInBracketsCnt > 0 Then
+      TmpInBracketsCnt = TmpInBracketsCnt - 1
+      TmpIsDelimiter = True
+    ElseIf Not TmpInsideQuotes And Not TmpInBraces And TmpChar = "{" Then
+      TmpInBraces = True 'Array literal, e.g. {"A","B","C"} -- treat as one
+      TmpIsDelimiter = True 'opaque unit, same as a quoted string (can't nest
+    ElseIf Not TmpInsideQuotes And TmpInBraces And TmpChar = "}" Then 'in Excel).
+      TmpInBraces = False
+      TmpIsDelimiter = True
+    End If
+
+    If Not TmpIsDelimiter And Not TmpInsideQuotes And TmpInBracketsCnt = 0 And Not TmpInBraces Then
+      TmpResult = TmpResult & TmpChar
+    End If
+  Next i
+
+  RemoveQuotedSections = TmpResult
+End Function
+
+
+Private Sub TestRemoveQuotedSectionsHelper(ByVal AOriginalStr As String, ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = RemoveQuotedSections(AOriginalStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  TestLogLine AOriginalStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr
+End Sub
+
+Private Sub TestRemoveQuotedSections()
+  TestRemoveQuotedSectionsHelper "Test(" & """This is the middle""" & ")", "Test()"
+  TestRemoveQuotedSectionsHelper "SUM([@[Revenue, Total]])", "SUM()"
+  TestRemoveQuotedSectionsHelper "A,[Col1],B", "A,,B"
+  TestRemoveQuotedSectionsHelper "[Col1],[Col2]", ","
+  TestRemoveQuotedSectionsHelper """[literal],text""" & ",A2", ",A2"
+  TestRemoveQuotedSectionsHelper "[]", vbNullString
+  TestRemoveQuotedSectionsHelper "Data!E3,{""A"",""B"",""C""},0", "Data!E3,,0" 'Array literal's internal commas excluded.
+  TestRemoveQuotedSectionsHelper "A,{""X,Y"",""Z""},B", "A,,B" 'Comma inside a quoted array element also excluded.
+End Sub
+
+
+Public Function PosSkipQuotedSections(ByVal AStart As Long, ByVal AStr As String, ByVal ASubStr As String) As Long
+  Dim TmpInsideQuotes As Boolean
+  Dim TmpInBrackets As Boolean
+  Dim TmpInBracketsCnt As Long
+  Dim TmpInBraces As Boolean
+  Dim TmpChar As String
+  Dim i As Long
+
+  PosSkipQuotedSections = 0
+
+  TmpInsideQuotes = False
+
+  For i = AStart To Len(AStr)
+    TmpChar = Mid$(AStr, i, 1)
+
+    If TmpChar = """" Then
+      TmpInsideQuotes = Not TmpInsideQuotes
+    ElseIf Not TmpInsideQuotes And Not TmpInBrackets And Not TmpInBraces Then
+      If Mid$(AStr, i, Len(ASubStr)) = ASubStr Then
+        PosSkipQuotedSections = i
+        Exit Function
+      End If
+    End If
+
+    If Not TmpInsideQuotes Then
+      If TmpChar = "[" Then TmpInBracketsCnt = TmpInBracketsCnt + 1
+      If TmpChar = "]" Then TmpInBracketsCnt = TmpInBracketsCnt - 1
+      TmpInBrackets = TmpInBracketsCnt > 0
+
+      'Array literal, e.g. {"A","B","C"} -- can't nest in Excel, so a simple
+      'toggle (not a counter) is enough.
+      If TmpChar = "{" Then TmpInBraces = True
+      If TmpChar = "}" Then TmpInBraces = False
+    End If
+  Next i
+
+End Function
+
+
+Private Sub TestPosSkipQuotedSectionsHelper(ByVal AStart As Long, ByVal AStr As String, ByVal ASubStr As String, ByVal AExpectedPos As Long)
+  Dim TmpAnswerPos As Long
+  Dim TmpPassFailStr As String
+
+  TmpAnswerPos = PosSkipQuotedSections(AStart, AStr, ASubStr)
+  TmpPassFailStr = IIf(TmpAnswerPos = AExpectedPos, "PASS", "FAIL")
+
+  TestLogLine AStart & " | " & AStr & " | " & ASubStr & " | " & TmpAnswerPos & " | " & AExpectedPos & " | " & TmpPassFailStr
+End Sub
+
+Private Sub TestPosSkipQuotedSections()
+  TestPosSkipQuotedSectionsHelper 1, "=IF(A1=""("",1,2)", ")", 15
+  TestPosSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", 0 'Comma is inside brackets.
+  TestPosSkipQuotedSectionsHelper 1, "Data!E3,{""A"",""B"",""C""},0", ",", 8 'Finds the real separator, skips the array's internal commas.
+End Sub
+
+
+Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
+                                          ByVal AStr As String, _
+                                          ByVal ASubStr As String, _
+                                          ByVal ARepStr As String) As String
+  Dim TmpInsideQuotes As Boolean
+  Dim TmpInBrackets As Boolean
+  Dim TmpInBracketsCnt As Long
+  Dim TmpChar As String
+  Dim i As Long
+  Dim TmpResult As String
+
+  TmpResult = vbNullString
+  TmpInsideQuotes = False
+
+  For i = AStart To Len(AStr)
+    TmpChar = Mid$(AStr, i, 1)
+
+    If TmpChar = """" Then
+      TmpInsideQuotes = Not TmpInsideQuotes
+      TmpResult = TmpResult & TmpChar ' Always include quotes
+    ElseIf TmpInsideQuotes Or TmpInBrackets Then
+      TmpResult = TmpResult & TmpChar 'Always include bracketed content (structured references).
+    Else
+      If Mid$(AStr, i, Len(ASubStr)) = ASubStr Then
+        ' Append up to the current position before skipping the substring
+        TmpResult = TmpResult + ARepStr
+      Else
+        TmpResult = TmpResult & TmpChar
+      End If
+    End If
+
+    If Not TmpInsideQuotes Then
+      If TmpChar = "[" Then TmpInBracketsCnt = TmpInBracketsCnt + 1
+      If TmpChar = "]" Then TmpInBracketsCnt = TmpInBracketsCnt - 1
+      TmpInBrackets = TmpInBracketsCnt > 0
+    End If
+  Next i
+
+  ReplaceSkipQuotedSections = TmpResult
+End Function
+
+
+Private Sub TestReplaceSkipQuotedSectionsHelper(ByVal AStart As Long, _
+                                                ByVal AStr As String, _
+                                                ByVal ASubStr As String, _
+                                                ByVal ARepStr As String, _
+                                                ByVal AExpectedStr As String)
+  Dim TmpAnswerStr As String
+  Dim TmpPassFailStr As String
+
+  TmpAnswerStr = ReplaceSkipQuotedSections(AStart, AStr, ASubStr, ARepStr)
+  TmpPassFailStr = IIf(TmpAnswerStr = AExpectedStr, "PASS", "FAIL")
+
+  TestLogLine AStart & " | " & AStr & " | " & ASubStr & " | " & ARepStr & " | " & TmpAnswerStr & " | " & AExpectedStr & " | " & TmpPassFailStr
+End Sub
+
+Private Sub TestReplaceSkipQuotedSections()
+  TestReplaceSkipQuotedSectionsHelper 1, "=IF(A1,""a,b"",2,3)", ",", ", ", "=IF(A1, ""a,b"", 2, 3)"
+  TestReplaceSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", ", ", "SUM([@[Revenue, Total]])"
+End Sub
+
+
+'----------------------------------------------------------------------'
 '                        Core Functions                                '
 '----------------------------------------------------------------------'
 

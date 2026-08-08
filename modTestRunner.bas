@@ -145,9 +145,6 @@ Public Sub RunAllTests()
   ' modSmallFunctions.bas
   RunOneTest "TestShortenFormula"
   RunOneTest "TestStrCnt"
-  RunOneTest "TestRemoveQuotedSections"
-  RunOneTest "TestPosSkipQuotedSections"
-  RunOneTest "TestReplaceSkipQuotedSections"
   RunOneTest "TestShtNameRequiresSingleQuotes"
   RunOneTest "TestShtFormulaNameStr"
 
@@ -170,6 +167,9 @@ Public Sub RunAllTests()
   RunOneTest "TestAddOperatorWhiteSpaceDoubleNeg"
 
   ' modPrettyPrint.bas
+  RunOneTest "TestRemoveQuotedSections"
+  RunOneTest "TestPosSkipQuotedSections"
+  RunOneTest "TestReplaceSkipQuotedSections"
   RunOneTest "TestPrettyPrintWouldChangeFormula"
   RunOneTest "TestPrettyPrintExact"
   RunOneTest "TestAnswersEscapeStr"
