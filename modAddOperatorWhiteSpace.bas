@@ -353,7 +353,7 @@ End Sub
 ' test standalone: all cases below are the actual, unchanged output.
 Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
   TestAddOperatorWhiteSpaceExactHelper "=--C1", "=--C1"
-  TestAddOperatorWhiteSpaceExactHelper "=A1 + --B1", "=A1 + --B1"
+  TestAddOperatorWhiteSpaceExactHelper "=A1+--B1", "=A1 + --B1"
   TestAddOperatorWhiteSpaceExactHelper "=A1 * --B1", "=A1 * --B1"
   TestAddOperatorWhiteSpaceExactHelper "=A1 / --B1", "=A1 / --B1"
   TestAddOperatorWhiteSpaceExactHelper "=A1 ^ --B1", "=A1 ^ --B1"
@@ -362,6 +362,7 @@ Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 - --B1, TRUE, FALSE)", "=IF(A1 - --B1, TRUE, FALSE)"
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 = --B1, TRUE, FALSE)", "=IF(A1 = --B1, TRUE, FALSE)"
 End Sub
+
 
 
 

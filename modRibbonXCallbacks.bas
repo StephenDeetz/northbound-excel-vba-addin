@@ -48,3 +48,18 @@ Public Sub NBPub_PrettyPrintWorkbookCallback(control As IRibbonControl)
   ' "Pretty Print Workbook" => "PrettyPrintActiveWbk"
   PrettyPrintActiveWbk
 End Sub
+
+'Callback for mnuAboutHelp onAction
+Public Sub NBPub_AboutHelpCallback(control As IRibbonControl)
+  ThisWorkbook.FollowHyperlink "https://TODO-help-url"
+End Sub
+
+'Callback for mnuAboutSourceCode onAction
+Public Sub NBPub_AboutSourceCodeCallback(control As IRibbonControl)
+  ThisWorkbook.FollowHyperlink "https://TODO-source-code-url"
+End Sub
+
+'Callback for mnuAboutWebsite onAction
+Public Sub NBPub_AboutWebsiteCallback(control As IRibbonControl)
+  ThisWorkbook.FollowHyperlink "https://northboundgroup.com/"
+End Sub

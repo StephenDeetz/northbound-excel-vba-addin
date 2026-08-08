@@ -2,7 +2,7 @@
     <ribbon>
         <tabs>
             <tab id="tabNorthbound" label="Northbound">
-                <group id="grpPrettyPrint" label="Formulas">
+                <group id="grpPrettyPrint" label="Northbound">
 
                     <!-- Pretty Print -->
                     <splitButton id="sptPrettyPrint" size="large">
@@ -30,6 +30,21 @@
                                     supertip="Reformat all formulas in the entire workbook with consistent indentation and spacing." />
                         </menu>
                     </splitButton>
+
+                    <separator id="sepAbout" />
+
+                    <!-- About -->
+                    <menu id="mnuAbout" label="About" imageMso="Info" size="large">
+                        <button id="mnuAboutHelp" label="Help" imageMso="Help"
+                                onAction="NBPub_AboutHelpCallback"
+                                supertip="Open the Northbound Add-in help documentation." />
+                        <button id="mnuAboutSourceCode" label="Source Code" imageMso="ViewCode"
+                                onAction="NBPub_AboutSourceCodeCallback"
+                                supertip="Open the Northbound Add-in source code repository." />
+                        <button id="mnuAboutWebsite" label="Northbound Website" imageMso="OpenStartPage"
+                                onAction="NBPub_AboutWebsiteCallback"
+                                supertip="Open the Northbound Group website." />
+                    </menu>
                 </group>
             </tab>
         </tabs>
