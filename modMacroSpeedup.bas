@@ -204,6 +204,8 @@ Private Sub TestMacroSpeedup()
   Dim TmpPrePushCalculation     As XlCalculation
   Dim TmpPrePushDisplayAlerts   As Boolean
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   On Error GoTo OnError
 
   ' 1) Capture baseline
@@ -283,6 +285,8 @@ Private Sub Test_MacroSpeedup_AllItemsPushPop()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
@@ -321,6 +325,8 @@ Private Sub Test_MacroSpeedup_NestedDepth()
   Dim TmpBaselineEnableEvents   As Boolean
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
+
+  If IsStandaloneTestRun() Then ClearImmediateWindow
 
   On Error GoTo OnError
 
@@ -362,6 +368,8 @@ End Sub
 Private Sub Test_MacroSpeedup_ManualBaseline()
   Dim TmpBaselineCalculation As XlCalculation
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   On Error GoTo OnError
 
   ' Force a non-default baseline deliberately
@@ -392,6 +400,8 @@ Private Sub Test_MacroSpeedup_Interleaved()
   Dim TmpBaselineEnableEvents   As Boolean
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
+
+  If IsStandaloneTestRun() Then ClearImmediateWindow
 
   On Error GoTo OnError
 
@@ -438,6 +448,8 @@ Private Sub Test_MacroSpeedup_IdempotentPush()
   Dim TmpBaselineEnableEvents   As Boolean
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
+
+  If IsStandaloneTestRun() Then ClearImmediateWindow
 
   On Error GoTo OnError
 
@@ -490,6 +502,8 @@ Private Sub Test_MacroSpeedup_MidScopeOverride()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   On Error GoTo OnError
 
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
@@ -532,6 +546,8 @@ Private Sub Test_MacroSpeedup_ErrorPathFinalizer()
   Dim TmpBaselineDisplayAlerts  As Boolean
   Dim TmpBaselineCursor         As XlMousePointer
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   SnapshotState TmpBaselineScreenUpdating, TmpBaselineCalculation, TmpBaselineEnableEvents, _
                 TmpBaselineDisplayAlerts, TmpBaselineCursor
 
@@ -564,6 +580,7 @@ OnError:
 Finally:
   err.Clear
 End Sub
+
 
 
 

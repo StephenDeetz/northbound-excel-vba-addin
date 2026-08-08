@@ -105,6 +105,7 @@ Private Sub TestRemoveQuotedSectionsHelper(ByVal AOriginalStr As String, ByVal A
 End Sub
 
 Private Sub TestRemoveQuotedSections()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestRemoveQuotedSectionsHelper "Test(" & """This is the middle""" & ")", "Test()"
   TestRemoveQuotedSectionsHelper "SUM([@[Revenue, Total]])", "SUM()"
   TestRemoveQuotedSectionsHelper "A,[Col1],B", "A,,B"
@@ -166,6 +167,7 @@ Private Sub TestPosSkipQuotedSectionsHelper(ByVal AStart As Long, ByVal AStr As 
 End Sub
 
 Private Sub TestPosSkipQuotedSections()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestPosSkipQuotedSectionsHelper 1, "=IF(A1=""("",1,2)", ")", 15
   TestPosSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", 0 'Comma is inside brackets.
   TestPosSkipQuotedSectionsHelper 1, "Data!E3,{""A"",""B"",""C""},0", ",", 8 'Finds the real separator, skips the array's internal commas.
@@ -229,6 +231,7 @@ Private Sub TestReplaceSkipQuotedSectionsHelper(ByVal AStart As Long, _
 End Sub
 
 Private Sub TestReplaceSkipQuotedSections()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestReplaceSkipQuotedSectionsHelper 1, "=IF(A1,""a,b"",2,3)", ",", ", ", "=IF(A1, ""a,b"", 2, 3)"
   TestReplaceSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", ", ", "SUM([@[Revenue, Total]])"
 End Sub
@@ -279,6 +282,7 @@ Private Function FindMatchingCloseParen(ByVal AOpenParenStart As Long, ByVal ASt
 End Function
 
 Private Sub TestFindMatchingCloseParen()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   Debug.Print FindMatchingCloseParen(5, "=@IF(TRIM($A2)<>"""",IF(IFERROR(FIND("" ) "",$A2),0)>0,INDEX(TEXTSPLIT($A2,""("","" - ""),1,2),INDEX(TEXTSPLIT($A2,""|""),2)),"""")")
   Debug.Print FindMatchingCloseParen(10, "=@IF(TRIM($A2)<>"""",IF(IFERROR(FIND("" ) "",$A2),0)>0,INDEX(TEXTSPLIT($A2,""("","" - ""),1,2),INDEX(TEXTSPLIT($A2,""|""),2)),"""")")
   Debug.Print FindMatchingCloseParen(22, "=@IF(TRIM($A2)<>"""",IF(IFERROR(FIND("" ) "",$A2),0)>0,INDEX(TEXTSPLIT($A2,""("","" - ""),1,2),INDEX(TEXTSPLIT($A2,""|""),2)),"""")")
@@ -352,6 +356,8 @@ End Function
 
 
 Private Sub TestSimpleArgText()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   'Debug.Print SimpleArgText("=SUM(LEN(TRIM(Q$5#))-LEN(SUBSTITUTE(TRIM(Q$5#),$Z10,"")))+ROW($AD10)/10000", 14)
   'Debug.Print SimpleArgText("=@IF(TRIM($A2)<>"""",IF(IFERROR(FIND("" - "",$A2),0)>0,INDEX(TEXTSPLIT($A2,""|"","" - ""),1,2),INDEX(TEXTSPLIT($A2,""|""),2)),"""")", 30)
   'Debug.Print SimpleArgText("IF(IFERROR(FIND("" - "",$A2),0)>0,INDEX(TEXTSPLIT($A2,""|"","" - ""),1,2)", 11)
@@ -391,6 +397,7 @@ End Function
 
 
 Private Sub TestFuncNameBeforeOpenParen()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
 
   ' Basic
   Debug.Print FuncNameBeforeOpenParen("=LET(x, A1 + B1)", 5)                  ' LET
@@ -538,10 +545,11 @@ End Function
 
 
 Private Sub TestPairArgPostProcess()
+  ClearImmediateWindow
+
   TestPrettyPrintHelper "=LET(a, 1, b, 2, a + b)"
   TestPrettyPrintHelper "=IFS(A1 > 10, ""High"", A1 > 5, ""Mid"", TRUE, ""Low"")"
   TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Other"")"
-  TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Default"")"
 End Sub
 
 
@@ -744,6 +752,8 @@ Private Sub TestPrettyPrintWouldChangeFormulaHelper(ByVal AFrmStr As String, ByV
 End Sub
 
 Private Sub TestPrettyPrintWouldChangeFormula()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   ' Simple formula: Pretty Print maps it to itself either way.
   TestPrettyPrintWouldChangeFormulaHelper "=SUM(A1:A10)", False
 
@@ -773,6 +783,8 @@ Private Sub TestPrettyPrintExactHelper(ByVal AFrmStr As String, ByVal AExpectedS
 End Sub
 
 Private Sub TestPrettyPrintExact()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   'An array literal inside a function's argument list must not inflate that
   'call's own comma count with the array's internal commas -- MATCH here has
   'only 2 real arguments (Data!E3 and 0, plus the array as a whole), so it
@@ -867,6 +879,7 @@ Private Sub TestAnswersEscapeStrHelper(ByVal AStr As String, ByVal AExpectedEsca
 End Sub
 
 Private Sub TestAnswersEscapeStr()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestAnswersEscapeStrHelper "=SUM(A1:A10)", "=SUM(A1:A10)"
   TestAnswersEscapeStrHelper "=CHOOSE(" & vbLf & "    A1)", "=CHOOSE({{LF}}    A1)"
   TestAnswersEscapeStrHelper "=A1" & vbCrLf & vbCrLf, "=A1{{CRLF}}{{CRLF}}"
@@ -882,6 +895,8 @@ Private Sub TestAnswersReadEntries()
   Dim TmpEntry1 As Variant
   Dim TmpEntry2 As Variant
   Dim TmpPassFailStr As String
+
+  If IsStandaloneTestRun() Then ClearImmediateWindow
 
   TmpPathStr = Environ$("TEMP") & "\NBPub_AnswersReadEntriesTest.txt"
 
@@ -987,6 +1002,8 @@ End Sub
 Public Sub TestPrettyPrintMatchAnswers()
   Dim TmpPathStr As String
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   TmpPathStr = ResolveAnswersFilePathStr()
 
   AnswersModeStr = "COMPARE"
@@ -1060,8 +1077,9 @@ Private Sub RunPrettyPrintCases()
   'collapses to one line (see TestPrettyPrintExact for the exact assertion).
   TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"
 
-  TestPairArgPostProcess
-
+  TestPrettyPrintHelper "=LET(a, 1, b, 2, a + b)"
+  TestPrettyPrintHelper "=IFS(A1 > 10, ""High"", A1 > 5, ""Mid"", TRUE, ""Low"")"
+  TestPrettyPrintHelper "=SWITCH(A1, 1, ""One"", 2, ""Two"", ""Other"")"
 End Sub
 
 Public Sub TestPrettyPrint()
@@ -1194,6 +1212,8 @@ End Function
 Private Sub TestCellSetFormula2Safe()
   Dim TmpResult As Boolean
   Dim TmpFrmStr As String
+
+  ClearImmediateWindow
 
   TmpFrmStr = "=SUM(A2:A10)"
 
@@ -1568,6 +1588,8 @@ Public Sub PrettyPrintActiveWbk()
 
   MsgBox TmpResultStr
 End Sub
+
+
 
 
 

@@ -31,6 +31,7 @@ Public Function GetUtilitiesAddInSettingsDir() As String
 End Function
 
 Private Sub TestGetUtilitiesAddInSettingsDir()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   Debug.Print GetUtilitiesAddInSettingsDir
 End Sub
 
@@ -104,6 +105,7 @@ Public Function AllClear2(ByVal AIsWbkReadOnlyWarning As Boolean, _
 
   AllClear2 = True
 End Function
+
 
 
 

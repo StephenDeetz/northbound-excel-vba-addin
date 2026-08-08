@@ -158,9 +158,4 @@
 >>>>EXPECTED>>>>
 =SWITCH({{LF}}    A1,{{LF}}    1, "One",{{LF}}    2, "Two",{{LF}}    "Other"{{LF}})
 >>>>END>>>>
->>>>INPUT>>>>
-=SWITCH(A1, 1, "One", 2, "Two", "Default")
->>>>EXPECTED>>>>
-=SWITCH({{LF}}    A1,{{LF}}    1, "One",{{LF}}    2, "Two",{{LF}}    "Default"{{LF}})
->>>>END>>>>
 

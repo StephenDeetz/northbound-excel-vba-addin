@@ -33,6 +33,14 @@ Private Const kAnswersFileName As String = "PrettyPrintAnswers.txt"
 
 Private TestFilePathStr As String 'Set by RunAllTests for its duration; vbNullString otherwise.
 
+'True when no Test* sub is currently running under RunAllTests -- i.e. this
+'Test* sub was launched standalone (F5 or Immediate window). Top-level Test*
+'subs call ClearImmediateWindow when this is True, so standalone re-runs
+'don't accumulate old Debug.Print output.
+Public Function IsStandaloneTestRun() As Boolean
+  IsStandaloneTestRun = (LenB(TestFilePathStr) = 0)
+End Function
+
 'Writes ALine to the file RunAllTests is currently targeting, or the
 'Immediate window if this Test* sub is running standalone.
 Public Sub TestLogLine(ByVal ALine As String)

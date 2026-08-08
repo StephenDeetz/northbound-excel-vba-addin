@@ -69,6 +69,8 @@ Private Sub TestIsMultiOperator()
   Dim TmpMultiOps As Variant
   TmpMultiOps = Array("<=", ">=", "<>")
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   TestIsOperatorHelper "<=", TmpMultiOps, True
   TestIsOperatorHelper ">=", TmpMultiOps, True
   TestIsOperatorHelper "<>", TmpMultiOps, True
@@ -82,6 +84,8 @@ End Sub
 Private Sub TestIsSingleOperator()
   Dim TmpSingleOps As Variant
   TmpSingleOps = Array("+", "-", "*", "/", "^", "&", "=", "<", ">")
+
+  If IsStandaloneTestRun() Then ClearImmediateWindow
 
   TestIsOperatorHelper "+", TmpSingleOps, True
   TestIsOperatorHelper "-", TmpSingleOps, True
@@ -224,6 +228,8 @@ Private Sub TestAddOperatorWhiteSpaceExactHelper(ByVal AFormula As String, ByVal
 End Sub
 
 Private Sub TestAddOperatorWhiteSpaceExact()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   ' Array literals only ever hold constants in Excel -- no operators except
   ' a leading "-" on a negative number literal. "{" wasn't recognized as a
   ' valid unary-minus context (unlike "(" and ","), so a negative number
@@ -245,6 +251,8 @@ Private Sub TestAddOperatorWhiteSpaceExact()
 End Sub
 
 Private Sub TestAddOperatorWhiteSpace()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   ' Simple formula with single-character operators
   TestAddOperatorWhiteSpaceExactHelper "=A1+B1*C1/D1^E1", "=A1 + B1 * C1 / D1 ^ E1"
 
@@ -306,6 +314,8 @@ End Sub
 
 
 Private Sub TestAddOperatorWhiteSpaceEdgeCases()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   ' Multi-operator followed by space
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1<>"""", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")", _
     "=IF(A1 <> """", CONCAT(""Prefix-"", TEXTJOIN("", "", TRUE, B1, C1, D1)), ""No Data"")"
@@ -353,6 +363,7 @@ End Sub
 ' preceding space, unlike every other operator. Confirmed by running this
 ' test standalone: all cases below are the actual, unchanged output.
 Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestAddOperatorWhiteSpaceExactHelper "=--C1", "=--C1"
   TestAddOperatorWhiteSpaceExactHelper "=A1+--B1", "=A1 + --B1"
   TestAddOperatorWhiteSpaceExactHelper "=A1 * --B1", "=A1 * --B1"
@@ -363,6 +374,7 @@ Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 - --B1, TRUE, FALSE)", "=IF(A1 - --B1, TRUE, FALSE)"
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 = --B1, TRUE, FALSE)", "=IF(A1 = --B1, TRUE, FALSE)"
 End Sub
+
 
 
 

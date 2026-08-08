@@ -82,6 +82,8 @@ Private Sub TestWbkExportVBAModules()
   Dim TmpResult As Boolean
   Dim TmpErrStr As String
 
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   '@Ignore UnassignedVariableUsage
   TmpResult = WbkExportVBAModules(ThisWorkbook, "C:\Temp\", TmpErrStr)
   
@@ -125,6 +127,7 @@ Public Sub AddinExportCodeModules()
   End If
   
 End Sub
+
 
 
 

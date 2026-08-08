@@ -71,6 +71,7 @@ Private Sub TestStrCntHelper(ByVal AStr As String, ByVal ASubStr As String, ByVa
 End Sub
 
 Private Sub TestStrCnt()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestStrCntHelper "/DDDD//", "//", 1
 End Sub
 
@@ -106,6 +107,8 @@ Private Sub TestShtNameRequiresSingleQuotesHelper(ByVal AShtNameStr As String, B
 End Sub
 
 Private Sub TestShtNameRequiresSingleQuotes()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
   ' False -- no character from kSpecialChars present.
   TestShtNameRequiresSingleQuotesHelper "Sheet1", False
   TestShtNameRequiresSingleQuotesHelper "Sheet123", False
@@ -163,6 +166,7 @@ Private Sub TestShtFormulaNameStrHelper(ByVal AShtNameStr As String, ByVal AExpe
 End Sub
 
 Private Sub TestShtFormulaNameStr()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestShtFormulaNameStrHelper "Sheet1", "Sheet1"
   TestShtFormulaNameStrHelper "Sheet 1", "'Sheet 1'"
 End Sub
@@ -236,6 +240,7 @@ Private Sub TestShortenFormulaHelper(ByVal AStr As String, ByVal AExpectedStr As
 End Sub
 
 Private Sub TestShortenFormula()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   TestShortenFormulaHelper "=SUM( A1 , B1 )", "=SUM(A1,B1)"
 
   'A trailing CRLF-CRLF (e.g. blank lines left over from a previous Pretty
@@ -247,11 +252,16 @@ End Sub
 
 ' Purpose: Clear all text from the VBE Immediate window.
 Public Sub ClearImmediateWindow()
+  Const kImmediateWindowMaxLines  As Long = 200
+  Dim TmpCnt As Long
+  
   If Not Application.VBE.MainWindow.Visible Then Exit Sub
-  Application.VBE.Windows("Immediate").SetFocus
-  DoEvents
-  Application.SendKeys "^g^a{DEL}", True
-  DoEvents
+  If Not Application.VBE.Windows("Immediate").Visible Then Exit Sub
+
+  For TmpCnt = 1 To kImmediateWindowMaxLines
+    Debug.Print ""
+  Next TmpCnt
+
 End Sub
 
 
@@ -365,6 +375,8 @@ Public Sub OpenPathInExplorer(ByVal APathStr As String)
   
   Shell TmpStr, vbNormalFocus
 End Sub
+
+
 
 
 

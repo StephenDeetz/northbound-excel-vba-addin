@@ -87,11 +87,13 @@ Public Function AppDataFileReadStr(ByVal AFileNameStr As String) As String
 End Function
 
 Private Sub TestAppDataFileWriteStr()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   AppDataFileWriteStr "TestValue", "TestAppData.txt"
   Debug.Print "TestAppDataFileWriteStr: wrote 'TestValue' to TestAppData.txt"
 End Sub
 
 Private Sub TestAppDataFileReadStr()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
   Debug.Print "TestAppDataFileReadStr: " & AppDataFileReadStr("TestAppData.txt")
 End Sub
 
