@@ -1,4 +1,7 @@
 Attribute VB_Name = "modPrettyPrint"
+' Copyright (c) 2026 Northbound Group
+' Contact: stephendeetz@northboundgroup.com
+' SPDX-License-Identifier: MIT
 Option Explicit
 
 Private Const kSimpleArgTextLen = 50
@@ -1588,6 +1591,7 @@ Public Sub PrettyPrintActiveWbk()
 
   MsgBox TmpResultStr
 End Sub
+
 
 
 

@@ -1,4 +1,7 @@
 Attribute VB_Name = "modRibbonXCallbacks"
+' Copyright (c) 2026 Northbound Group
+' Contact: stephendeetz@northboundgroup.com
+' SPDX-License-Identifier: MIT
 Option Explicit
 
 ' ==================================

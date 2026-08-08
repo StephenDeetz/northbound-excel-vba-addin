@@ -1,4 +1,7 @@
 Attribute VB_Name = "modUtilitiesAddin"
+' Copyright (c) 2026 Northbound Group
+' Contact: stephendeetz@northboundgroup.com
+' SPDX-License-Identifier: MIT
 Option Explicit
 
 Public Const kAddinFileNameStr = "Northbound.xlam"

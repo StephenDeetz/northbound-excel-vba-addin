@@ -7,6 +7,9 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+' Copyright (c) 2026 Northbound Group
+' Contact: stephendeetz@northboundgroup.com
+' SPDX-License-Identifier: MIT
 ' Class Module: CMacroSpeedup
 Option Explicit
 

@@ -1,4 +1,7 @@
 Attribute VB_Name = "modSmallFunctions"
+' Copyright (c) 2026 Northbound Group
+' Contact: stephendeetz@northboundgroup.com
+' SPDX-License-Identifier: MIT
 Option Explicit
 ' Shared low-level string/formula helpers used by the Pretty Print feature
 ' (modPrettyPrint.bas, modAddOperatorWhiteSpace.bas).

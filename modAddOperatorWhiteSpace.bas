@@ -1,4 +1,7 @@
 Attribute VB_Name = "modAddOperatorWhiteSpace"
+' Copyright (c) 2026 Northbound Group
+' Contact: stephendeetz@northboundgroup.com
+' SPDX-License-Identifier: MIT
 Option Explicit
 
 Private Function TrimEnd(ByVal AStr As String) As String
