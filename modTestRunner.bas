@@ -121,6 +121,7 @@ Private Sub RunOneTest(ByVal ATestNameStr As String)
   TestLogLine vbNullString 'Blank separator line between sections.
 End Sub
 
+' Purpose: Run every wired-in Test* sub across all modules and log PASS/FAIL results to TestResults.txt.
 Public Sub RunAllTests()
   Dim TmpPathStr As String
   Dim TmpPassCnt As Long

@@ -3,6 +3,7 @@ Option Explicit
 
 Private Const kModulePathFile As String = "NBPub_AddinModulePath.txt"
 
+' Purpose: Export every VBA module/class/form in a workbook's VBA project to a folder.
 Public Function WbkExportVBAModules(ByVal AWbk As Workbook, _
                                     ByVal ADirStr As String, _
                                     Optional ByRef AErrStr As Variant) As Long
@@ -92,6 +93,7 @@ Private Sub TestWbkExportVBAModules()
   End If
 End Sub
 
+' Purpose: Prompt for a folder (remembering the last one used) and export ThisWorkbook's VBA modules to it.
 Public Sub AddinExportCodeModules()
   Dim TmpErrStr As String
   Dim TmpResult As Long

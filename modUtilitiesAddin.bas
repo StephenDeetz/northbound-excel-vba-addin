@@ -3,6 +3,7 @@ Option Explicit
 
 Public Const kAddinFileNameStr = "Northbound.xlam"
 
+' Purpose: Return (creating if needed) the add-in's settings directory under AppData.
 Public Function GetUtilitiesAddInSettingsDir() As String
   Dim TmpDir As String
   Const kUtilitiesAddInSubDir = "Northbound Add-in"
@@ -33,6 +34,7 @@ Private Sub TestGetUtilitiesAddInSettingsDir()
   Debug.Print GetUtilitiesAddInSettingsDir
 End Sub
 
+' Purpose: Run pre-flight guard checks (read-only, protection, sheet type, selection shape) before a bulk operation.
 Public Function AllClear2(ByVal AIsWbkReadOnlyWarning As Boolean, _
                           ByVal AWbkProtectedStructWarning As Boolean, _
                           ByVal AIsActiveShtWorksheetWarning As Boolean, _

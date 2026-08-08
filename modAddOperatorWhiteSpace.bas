@@ -96,6 +96,7 @@ Private Sub TestIsSingleOperator()
 End Sub
 
 
+' Purpose: Add spacing around binary operators in a formula string.
 Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
   Dim TmpCnt               As Long
   Dim TmpStr               As String

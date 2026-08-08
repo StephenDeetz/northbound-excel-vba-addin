@@ -26,6 +26,7 @@ Private Sub Class_Initialize()
 End Sub
 
 ' ===== Public Surface =====
+' Purpose: Clear all item stacks, discarding any pending push/pop state.
 Public Sub Init()
   StkScreenUpdating.Clear
   StkCalculation.Clear
@@ -34,6 +35,7 @@ Public Sub Init()
   StkCursor.Clear
 End Sub
 
+' Purpose: Push and apply the speedup setting for every tracked item.
 Public Sub PushAll()
   PushScreenUpdating
   PushCalculation
@@ -42,6 +44,7 @@ Public Sub PushAll()
   PushCursorWait
 End Sub
 
+' Purpose: Pop and restore the saved setting for every tracked item.
 Public Sub PopAll()
   PopCursor
   PopDisplayAlerts
@@ -50,6 +53,7 @@ Public Sub PopAll()
   PopScreenUpdating
 End Sub
 
+' Purpose: Pop every pending entry off all item stacks, restoring original settings.
 Public Sub ClearAll()
   Do While StkCursor.Count > 0:         PopCursor:         Loop
   Do While StkDisplayAlerts.Count > 0:  PopDisplayAlerts:  Loop
@@ -58,6 +62,7 @@ Public Sub ClearAll()
   Do While StkScreenUpdating.Count > 0: PopScreenUpdating: Loop
 End Sub
 
+' Purpose: Push and apply the speedup setting for a single tracked item.
 Public Sub PushItem(ByVal AItem As msMacroItems)
   Select Case AItem
     Case msScreenUpdating: PushScreenUpdating
@@ -68,6 +73,7 @@ Public Sub PushItem(ByVal AItem As msMacroItems)
   End Select
 End Sub
 
+' Purpose: Pop and restore the saved setting for a single tracked item.
 Public Sub PopItem(ByVal AItem As msMacroItems)
   Select Case AItem
     Case msScreenUpdating: PopScreenUpdating

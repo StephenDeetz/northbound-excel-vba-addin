@@ -13,23 +13,28 @@ Option Explicit
 '   ClearImmediateWindow
 '   SpecialCellsSafe
 
+' Purpose: Increment a numeric variable by 1.
 Public Sub Inc(ByRef AVal As Variant)
   AVal = AVal + 1
 End Sub
 
+' Purpose: Decrement a numeric variable by 1.
 Public Sub Dec(ByRef AVal As Variant)
   AVal = AVal - 1
 End Sub
 
+' Purpose: Return the current user's AppData directory path.
 Public Function GetAppDataDir() As String
   GetAppDataDir = Environ$("AppData")
 End Function
 
+' Purpose: Return True if the given path exists and is a directory.
 Public Function DirExists(ByVal AFileNameStr As String) As Boolean
   On Error Resume Next
   DirExists = ((GetAttr(AFileNameStr) And vbDirectory) = vbDirectory)
 End Function
 
+' Purpose: Append a trailing backslash to a directory path if it lacks one.
 Public Function IncludeTrailingBackslash(ByVal ADirStr As String) As String
   If Right$(ADirStr, 1) <> "\" Then
     IncludeTrailingBackslash = ADirStr & "\"
@@ -38,6 +43,7 @@ Public Function IncludeTrailingBackslash(ByVal ADirStr As String) As String
   End If
 End Function
 
+' Purpose: Count non-overlapping occurrences of a substring within a string.
 Public Function StrCnt(ByVal AStr As String, ByVal ASubStr As String) As Long
   Dim TmpPos As Long
   StrCnt = 0
@@ -69,6 +75,7 @@ Private Sub TestStrCnt()
 End Sub
 
 
+' Purpose: Return True if a sheet name requires single-quoting in a formula reference.
 Public Function ShtNameRequiresSingleQuotes(ByVal AShtNameStr As String) As Boolean
 
   Const kSpecialChars As String = " -',:[]()!&^%$#@{}=+<>?/\"
@@ -135,6 +142,7 @@ Private Sub TestShtNameRequiresSingleQuotes()
 End Sub
 
 
+' Purpose: Return a sheet name formatted for use in a formula, single-quoted if needed.
 Public Function ShtFormulaNameStr(ByVal AShtNameStr As String) As String
   If ShtNameRequiresSingleQuotes(AShtNameStr) Then
     ShtFormulaNameStr = "'" & AShtNameStr & "'"
@@ -160,6 +168,7 @@ Private Sub TestShtFormulaNameStr()
 End Sub
 
 
+' Purpose: Strip unnecessary spaces and line breaks from a formula string outside quoted sections.
 Public Function ShortenFormula(ByVal AStr As String) As String
   Dim TmpCnt As Long
   Dim TmpStr As String
@@ -236,6 +245,7 @@ Private Sub TestShortenFormula()
 End Sub
 
 
+' Purpose: Clear all text from the VBE Immediate window.
 Public Sub ClearImmediateWindow()
   If Not Application.VBE.MainWindow.Visible Then Exit Sub
   Application.VBE.Windows("Immediate").SetFocus
@@ -245,6 +255,7 @@ Public Sub ClearImmediateWindow()
 End Sub
 
 
+' Purpose: Wrap Range.SpecialCells, returning Nothing instead of raising when no cells match.
 Public Function SpecialCellsSafe(ByVal ARng As Range, _
                                  ByVal ACellType As XlCellType, _
                                  Optional ByVal AValue As Variant) As Range
@@ -272,6 +283,7 @@ OnError:
 End Function
 
 
+' Purpose: Manual smoke test for SpecialCellsSafe against the active sheet's used range.
 Public Sub SpecialCellsSafeTest()
   Dim rngToSearch As Range
 
@@ -292,6 +304,7 @@ OnError:
   GoTo Finally
 End Sub
 
+' Purpose: Return True if any worksheet in the given workbook has protected contents.
 Public Function AnySheetsProtected(ByVal AWkBook As Workbook) As Boolean
   Dim TmpWorksheet As Worksheet
 
@@ -339,6 +352,7 @@ Public Function GetFolder(ByVal AStartFolderStr As String, _
 End Function
 
 
+' Purpose: Open the given path in a Windows Explorer window.
 Public Sub OpenPathInExplorer(ByVal APathStr As String)
   Dim TmpStr As String
   

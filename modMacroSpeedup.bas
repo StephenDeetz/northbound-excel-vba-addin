@@ -81,6 +81,7 @@ Private Function MacroSpeedupState() As CMacroSpeedup
 End Function
 
 ' ===== Front Door =====
+' Purpose: Push or pop saved Excel state (screen updating, calculation, events, alerts, cursor) around bulk operations.
 Public Sub MacroSpeedup(Optional ByVal AStackOptions As msStackOptions = msInit, _
                         Optional ByVal AMacroItems As msMacroItems = msAllItems)
   
@@ -107,6 +108,7 @@ Public Sub MacroSpeedup(Optional ByVal AStackOptions As msStackOptions = msInit,
   End Select
 End Sub
 
+' Purpose: Print the live Application settings MacroSpeedup manages to the Immediate window.
 Public Sub MSState()
   Dim TmpCalcStr As String
   Dim TmpCursorStr As String

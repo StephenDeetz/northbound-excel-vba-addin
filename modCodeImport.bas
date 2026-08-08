@@ -70,6 +70,7 @@ Private Function FileReadStr(ByVal APathStr As String) As String
   FileReadStr = TmpResult
 End Function
 
+' Purpose: Write a string to a file in the add-in's AppData settings directory.
 Public Sub AppDataFileWriteStr(ByVal AStr As String, ByVal AFileNameStr As String)
   Dim TmpDir As String
   TmpDir = AppDataDirStr
@@ -77,6 +78,7 @@ Public Sub AppDataFileWriteStr(ByVal AStr As String, ByVal AFileNameStr As Strin
   FileWriteStr TmpDir & AFileNameStr, AStr
 End Sub
 
+' Purpose: Read a string from a file in the add-in's AppData settings directory.
 Public Function AppDataFileReadStr(ByVal AFileNameStr As String) As String
   Dim TmpDir As String
   TmpDir = AppDataDirStr

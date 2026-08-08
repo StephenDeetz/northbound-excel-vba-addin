@@ -47,10 +47,12 @@ End Sub
 
 
 ' ===== Core Methods =====
+' Purpose: Push a value onto the top of the stack.
 Public Sub Push(ByVal AValue As Variant)
   Coll.Add AValue
 End Sub
 
+' Purpose: Pop and return the top value; returns Null if the stack is empty.
 Public Function Pop() As Variant
   Pop = Null
   
@@ -65,6 +67,7 @@ Public Function Pop() As Variant
   End If
 End Function
 
+' Purpose: Return the top value without removing it; returns Null if the stack is empty.
 Public Function Peek() As Variant
   Peek = Null
   
@@ -74,18 +77,21 @@ Public Function Peek() As Variant
   Peek = CollObj(CollObj.Count)
 End Function
 
+' Purpose: Return the number of items currently on the stack.
 Public Function Count() As Long
   Count = 0
   If CollObj Is Nothing Then Exit Function
   Count = CollObj.Count
 End Function
 
+' Purpose: Empty the stack by releasing the backing Collection.
 Public Sub Clear()
   If Not CollObj Is Nothing Then
     Set CollObj = Nothing
   End If
 End Sub
 
+' Purpose: Return True if the stack has no items.
 Public Function IsEmpty() As Boolean
   IsEmpty = False
   If CollObj Is Nothing Then
@@ -97,6 +103,7 @@ End Function
 
 
 ' ===== Safe Methods =====
+' Purpose: Safely pop the top value; returns True on success, else False with an error string.
 Public Function TryPop(ByRef AValue As Variant, _
                        ByRef AErrStr As String) As Boolean
   
@@ -119,6 +126,7 @@ Public Function TryPop(ByRef AValue As Variant, _
   TryPop = True
 End Function
 
+' Purpose: Safely peek the top value; returns True on success, else False with an error string.
 Public Function TryPeek(ByRef AValue As Variant, _
                         ByRef AErrStr As String) As Boolean
   
