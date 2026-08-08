@@ -61,5 +61,5 @@ End Sub
 
 'Callback for mnuAboutWebsite onAction
 Public Sub NBPub_AboutWebsiteCallback(control As IRibbonControl)
-  ThisWorkbook.FollowHyperlink "https://northboundgroup.com/"
+  ThisWorkbook.FollowHyperlink "https://northboundgroup.com/?utm_source=excel_addin&utm_medium=ribbon&utm_campaign=about_menu"
 End Sub
