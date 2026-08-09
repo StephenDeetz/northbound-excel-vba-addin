@@ -54,12 +54,12 @@ End Sub
 
 'Callback for mnuAboutHelp onAction
 Public Sub NBPub_AboutHelpCallback(control As IRibbonControl)
-  ThisWorkbook.FollowHyperlink "https://TODO-help-url"
+  ThisWorkbook.FollowHyperlink "https://github.com/StephenDeetz/northbound-excel-vba-addin/blob/main/README.md"
 End Sub
 
 'Callback for mnuAboutSourceCode onAction
 Public Sub NBPub_AboutSourceCodeCallback(control As IRibbonControl)
-  ThisWorkbook.FollowHyperlink "https://TODO-source-code-url"
+  ThisWorkbook.FollowHyperlink "https://github.com/StephenDeetz/northbound-excel-vba-addin"
 End Sub
 
 'Callback for mnuAboutWebsite onAction

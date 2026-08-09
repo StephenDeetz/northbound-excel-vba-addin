@@ -20,9 +20,9 @@ internal add-in.
 1. Download the latest release: TODO-release-url
 2. Verify the download's SHA-256 hash matches the value published on the
    release page: TODO-hash-verification-instructions
-3. Add the `.xlam` file as an Excel add-in. If you are unfamiliar with
-   installing Excel add-ins or with marking a downloaded file as trusted,
-   see: TODO-install-instructions-link
+3. Add the `.xlam` file as an Excel add-in. For step-by-step instructions,
+   including unblocking the file and setting up a trusted location, see
+   [INSTALL.md](INSTALL.md).
 
 ## Source Code
 
@@ -38,4 +38,4 @@ MIT -- see [LICENSE](LICENSE).
 ## Links
 
 - Website: https://northboundgroup.com/
-- Issues / Source: TODO-github-url
+- Issues / Source: https://github.com/StephenDeetz/northbound-excel-vba-addin
