@@ -5,7 +5,7 @@ Attribute VB_Name = "modPrettyPrint"
 Option Explicit
 
 ' ==========================================================================
-'                  Side Note: How Excel Handles Arrays
+'                     Side Note: How Excel Handles Arrays
 ' ==========================================================================
 ' Excel normalizes array literals ({...}) on its own once a formula is
 ' actually stored in a cell -- it silently strips both line breaks and any
@@ -13,6 +13,11 @@ Option Explicit
 ' .Formula. The code comparing formulas has no way to tell that change came
 ' from Excel rather than from the last Pretty Print. Ergo, adding spaces or
 ' new lines to arrays will result in a silent Excel change.
+'
+' This means a cell is never recognized as pretty printed and therefore will
+' never minify on toggle.
+'
+' Solution: leave array innards alone.
 ' ==========================================================================
 
 Private Const kSimpleArgTextLen = 50
@@ -1614,6 +1619,8 @@ Public Sub PrettyPrintActiveWbk()
 
   MsgBox TmpResultStr
 End Sub
+
+
 
 
 
