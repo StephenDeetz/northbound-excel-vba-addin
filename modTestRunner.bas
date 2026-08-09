@@ -198,7 +198,7 @@ Public Sub RunAllTests()
     CountPassFail TmpPathStr, TmpPassCnt, TmpFailCnt
     TmpSummaryStr = "PASS: " & TmpPassCnt & " | FAIL: " & TmpFailCnt
 
-    TestLogLine "===== SUMMARY ====="
+    TestLogLine "===== SUMMARY " & Format$(Now, "yyyy-mm-dd hh:nn:ss") & " ====="
     TestLogLine TmpSummaryStr
   End If
 
