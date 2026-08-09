@@ -574,6 +574,9 @@ Private Function PairArgPostProcess(ByVal AStr As String) As String
 End Function
 
 
+' Intentionally standalone: not wired into RunPrettyPrintCases or RunAllTests.
+' Run manually (F5 or Immediate window) to spot-check pair-arg post-processing
+' (LET/IFS/SWITCH) output by eye.
 Private Sub TestPairArgPostProcess()
   ClearImmediateWindow
 
