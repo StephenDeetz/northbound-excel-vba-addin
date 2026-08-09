@@ -184,6 +184,7 @@ Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
   Dim TmpInsideQuotes As Boolean
   Dim TmpInBrackets As Boolean
   Dim TmpInBracketsCnt As Long
+  Dim TmpInBraces As Boolean
   Dim TmpChar As String
   Dim i As Long
   Dim TmpResult As String
@@ -197,8 +198,12 @@ Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
     If TmpChar = """" Then
       TmpInsideQuotes = Not TmpInsideQuotes
       TmpResult = TmpResult & TmpChar ' Always include quotes
-    ElseIf TmpInsideQuotes Or TmpInBrackets Then
-      TmpResult = TmpResult & TmpChar 'Always include bracketed content (structured references).
+    ElseIf TmpInsideQuotes Or TmpInBrackets Or TmpInBraces Then
+      TmpResult = TmpResult & TmpChar 'Always include bracketed/array content
+                                      '(structured references; array literals
+                                      'must not get their internal commas
+                                      'touched -- Excel strips any spacing
+                                      'added there anyway).
     Else
       If Mid$(AStr, i, Len(ASubStr)) = ASubStr Then
         ' Append up to the current position before skipping the substring
@@ -212,6 +217,9 @@ Public Function ReplaceSkipQuotedSections(ByVal AStart As Long, _
       If TmpChar = "[" Then TmpInBracketsCnt = TmpInBracketsCnt + 1
       If TmpChar = "]" Then TmpInBracketsCnt = TmpInBracketsCnt - 1
       TmpInBrackets = TmpInBracketsCnt > 0
+
+      If Not TmpInBraces And TmpChar = "{" Then TmpInBraces = True
+      If TmpInBraces And TmpChar = "}" Then TmpInBraces = False
     End If
   Next i
 
@@ -237,6 +245,9 @@ Private Sub TestReplaceSkipQuotedSections()
   If IsStandaloneTestRun() Then ClearImmediateWindow
   TestReplaceSkipQuotedSectionsHelper 1, "=IF(A1,""a,b"",2,3)", ",", ", ", "=IF(A1, ""a,b"", 2, 3)"
   TestReplaceSkipQuotedSectionsHelper 1, "SUM([@[Revenue, Total]])", ",", ", ", "SUM([@[Revenue, Total]])"
+  'Array literal's internal commas must stay untouched (Excel strips any
+  'added spacing there anyway) while the real outer commas still get spaced.
+  TestReplaceSkipQuotedSectionsHelper 1, "MATCH(Data!E3,{""A"",""B"",""C""},0)", ",", ", ", "MATCH(Data!E3, {""A"",""B"",""C""}, 0)"
 End Sub
 
 
@@ -636,18 +647,19 @@ Private Function PrettyPrint(ByVal AFrmStr As String) As String
 
     ElseIf TmpInBraces Then 'Array literal, e.g. {"A","B","C"}. Excel silently
                             'collapses these back to one line, so never break
-                            'inside one -- but a space after each real comma
-                            'is safe and reads better. Arrays can't nest in
-                            'Excel, so a local quote flag is enough to tell a
-                            'real separator comma from one inside a quoted
-                            'element (e.g. the comma in {"A,B","C"}).
+                            'inside one -- and never touch its internal comma
+                            'spacing either: Excel also silently strips any
+                            'spaces added there back out on the next save/edit,
+                            'so leaving them alone is the only way Pretty Print
+                            'stays idempotent against what Excel actually
+                            'stores. A local quote flag still tracks quoted
+                            'elements (e.g. {"A,B","C"}) so a "}" inside one
+                            'doesn't end the array early.
       If TmpChar = """" Then
         TmpInBraceQuotes = Not TmpInBraceQuotes
         TmpResult = TmpResult & TmpChar
       ElseIf TmpInBraceQuotes Then
         TmpResult = TmpResult & TmpChar
-      ElseIf TmpChar = "," Then
-        TmpResult = TmpResult & ", "
       ElseIf TmpChar = "}" Then
         TmpInBraces = False
         TmpResult = TmpResult & TmpChar
@@ -767,9 +779,9 @@ Private Sub TestPrettyPrintWouldChangeFormula()
   TestPrettyPrintWouldChangeFormulaHelper PrettyPrint("=IF(A1>0,SUM(A1:A10),0)"), False
 
   ' Array literal, already pretty-printed: must stay idempotent. {} content
-  ' gets ", " after each real comma (Excel is fine with spaces there) but
-  ' must never get a line break (Excel silently collapses those back to one
-  ' line, which would otherwise make this loop forever).
+  ' is left exactly as-is (no comma spacing, no line break) -- Excel silently
+  ' strips both back out on the next save/edit, so adding either would make
+  ' this loop forever (Pretty Print re-adding what Excel just removed).
   TestPrettyPrintWouldChangeFormulaHelper _
     PrettyPrint("=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"), False
 End Sub
@@ -796,7 +808,7 @@ Private Sub TestPrettyPrintExact()
   TestPrettyPrintExactHelper _
     "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")", _
     "=CHOOSE(" & vbLf & _
-    "    MATCH(Data!E3, {""A"", ""B"", ""C""}, 0)," & vbLf & _
+    "    MATCH(Data!E3, {""A"",""B"",""C""}, 0)," & vbLf & _
     "    ""Alpha""," & vbLf & _
     "    ""Beta""," & vbLf & _
     "    ""Gamma""" & vbLf & _
@@ -1074,8 +1086,8 @@ Private Sub RunPrettyPrintCases()
   TestPrettyPrintHelper "=SUM([@[Revenue, Total]])"
   TestPrettyPrintHelper "=SUM([@[Total (Net)]])"
 
-  'Array literal: real commas get ", " like everywhere else, but must never
-  'get a line break -- Excel silently collapses {} back to one line. Its
+  'Array literal: internal commas are left untouched (no spacing, no line
+  'break) -- Excel silently strips both back out on the next save/edit. Its
   'internal commas also must not inflate MATCH's own comma count, so MATCH
   'collapses to one line (see TestPrettyPrintExact for the exact assertion).
   TestPrettyPrintHelper "=CHOOSE(MATCH(Data!E3,{""A"",""B"",""C""},0),""Alpha"",""Beta"",""Gamma"")"

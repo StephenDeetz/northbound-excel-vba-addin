@@ -141,7 +141,7 @@
 >>>>INPUT>>>>
 =CHOOSE(MATCH(Data!E3,{"A","B","C"},0),"Alpha","Beta","Gamma")
 >>>>EXPECTED>>>>
-=CHOOSE({{LF}}    MATCH(Data!E3, {"A", "B", "C"}, 0),{{LF}}    "Alpha",{{LF}}    "Beta",{{LF}}    "Gamma"{{LF}})
+=CHOOSE({{LF}}    MATCH(Data!E3, {"A","B","C"}, 0),{{LF}}    "Alpha",{{LF}}    "Beta",{{LF}}    "Gamma"{{LF}})
 >>>>END>>>>
 >>>>INPUT>>>>
 =LET(a, 1, b, 2, a + b)
