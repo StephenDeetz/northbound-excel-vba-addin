@@ -4,6 +4,17 @@ Attribute VB_Name = "modPrettyPrint"
 ' SPDX-License-Identifier: MIT
 Option Explicit
 
+' ==========================================================================
+'                  Side Note: How Excel Handles Arrays
+' ==========================================================================
+' Excel normalizes array literals ({...}) on its own once a formula is
+' actually stored in a cell -- it silently strips both line breaks and any
+' extra whitespace around commas inside {}, no matter what gets written via
+' .Formula. The code comparing formulas has no way to tell that change came
+' from Excel rather than from the last Pretty Print. Ergo, adding spaces or
+' new lines to arrays will result in a silent Excel change.
+' ==========================================================================
+
 Private Const kSimpleArgTextLen = 50
 Private Const kSimpleArgCnt = 4
 
