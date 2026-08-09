@@ -17,9 +17,10 @@ internal add-in.
 
 ## Installation
 
-1. Download the latest release: TODO-release-url
+1. Download the latest release:
+   https://github.com/StephenDeetz/northbound-excel-vba-addin/releases/latest
 2. Verify the download's SHA-256 hash matches the value published on the
-   release page: TODO-hash-verification-instructions
+   release page. On Windows: `certutil -hashfile Northbound.xlam SHA256`
 3. Add the `.xlam` file as an Excel add-in. For step-by-step instructions,
    including unblocking the file and setting up a trusted location, see
    [INSTALL.md](INSTALL.md).
