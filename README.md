@@ -17,6 +17,7 @@ range, sheet, and workbook level.
 | <img src="images/pretty-print-1-before.png" height="150"> | <img src="images/pretty-print-1-after.png" height="150"> |
 | <img src="images/pretty-print-2-before.png" height="150"> | <img src="images/pretty-print-2-after.png" height="200"> |
 | <img src="images/pretty-print-3-before.png" height="150"> | <img src="images/pretty-print-3-after.png" height="250"> |
+| <img src="images/pretty-print-4-before.png" height="150"> | <img src="images/pretty-print-4-after.png" height="150"> |
 
 More features will be added here as they are carved out of Northbound's
 internal add-in.
