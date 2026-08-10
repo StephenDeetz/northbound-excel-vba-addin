@@ -1,6 +1,6 @@
 # Installing Northbound.xlam
 
-Currently tested on English (US) Excel for Windows. Other locales and Mac Excel may work but are unverified.
+Currently tested on English (US) Excel for Windows. Other locales may work but are unverified.
 
 Northbound is an Excel VBA add-in. Follow these steps once; after that it loads automatically every time Excel starts.
 
