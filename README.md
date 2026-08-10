@@ -45,6 +45,15 @@ See `CLAUDE.md` for the development workflow.
 
 MIT -- see [LICENSE](LICENSE).
 
+## About Northbound
+
+Northbound Group advises founders of eCommerce, SaaS, and tech-enabled businesses on exits,
+acquisitions, and strategic decisions that define long-term value.
+
+As a financial services company, Northbound works heavily in Excel. We come across Excel
+issues of all types - from slow workbooks to complex formulas. Because of this, Northbound
+is happy to share this tool with our fellow Excel travelers.
+
 ## Links
 
 - Website: [https://northboundgroup.com/](https://northboundgroup.com/?utm_source=github&utm_medium=readme&utm_campaign=vba_addin)
