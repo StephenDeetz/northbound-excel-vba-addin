@@ -33,6 +33,8 @@ internal add-in.
 3. Add the `.xlam` file as an Excel add-in. For step-by-step instructions,
    including unblocking the file and setting up a trusted location, see
    [INSTALL.md](INSTALL.md).
+4. For frequent use, right-click any Northbound ribbon button and choose
+   "Add to Quick Access Toolbar" for one-click access from any ribbon tab.
 
 Note: There are also several YouTube videos that walk through Excel xlam add-in installation.
 
