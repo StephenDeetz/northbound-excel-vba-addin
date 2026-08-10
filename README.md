@@ -47,5 +47,5 @@ MIT -- see [LICENSE](LICENSE).
 
 ## Links
 
-- Website: https://northboundgroup.com/
+- Website: [https://northboundgroup.com/](https://northboundgroup.com/?utm_source=github&utm_medium=readme&utm_campaign=vba_addin)
 - Issues / Source: https://github.com/StephenDeetz/northbound-excel-vba-addin
