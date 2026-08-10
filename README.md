@@ -43,7 +43,8 @@ Note: There are also several YouTube videos that walk through Excel xlam add-in 
 This repo contains the add-in's source for transparency and version
 history. There is no build step -- the `.xlam` is assembled in Excel's
 VBA editor (VBE) and its modules are exported here as plain text files.
-See `CLAUDE.md` for the development workflow.
+See `CLAUDE.md` for the development workflow and `RELEASE.md` for the
+release process.
 
 ## License
 
