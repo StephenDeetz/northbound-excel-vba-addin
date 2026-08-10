@@ -15,6 +15,10 @@ range, sheet, and workbook level.
 More features will be added here as they are carved out of Northbound's
 internal add-in.
 
+| Before | After |
+|---|---|
+| ![Before](images/pretty-print-1-before.png) | ![After](images/pretty-print-1-after.png) |
+
 ## Installation
 
 1. Download the latest release:
