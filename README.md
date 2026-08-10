@@ -12,13 +12,13 @@ Reformats Excel formulas for readability (Pretty Print), or collapses them
 back down (Minify). Available from the Northbound ribbon tab, at the cell,
 range, sheet, and workbook level.
 
-More features will be added here as they are carved out of Northbound's
-internal add-in.
-
 | Before | After |
 |---|---|
-| <img src="images/pretty-print-1-before.png" width="400"> | <img src="images/pretty-print-1-after.png" width="400"> |
-| <img src="images/pretty-print-2-before.png" width="400"> | <img src="images/pretty-print-2-after.png" width="400"> |
+| <img src="images/pretty-print-1-before.png" height="150"> | <img src="images/pretty-print-1-after.png" height="150"> |
+| <img src="images/pretty-print-2-before.png" height="150"> | <img src="images/pretty-print-2-after.png" height="150"> |
+
+More features will be added here as they are carved out of Northbound's
+internal add-in.
 
 ## Installation
 
