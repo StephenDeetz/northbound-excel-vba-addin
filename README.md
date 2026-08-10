@@ -34,6 +34,8 @@ internal add-in.
    including unblocking the file and setting up a trusted location, see
    [INSTALL.md](INSTALL.md).
 
+Note: There are also several YouTube videos that walk through Excel xlam add-in installation.
+
 ## Source Code
 
 This repo contains the add-in's source for transparency and version
