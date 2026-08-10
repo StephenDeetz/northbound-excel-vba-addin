@@ -17,7 +17,7 @@ internal add-in.
 
 | Before | After |
 |---|---|
-| ![Before](images/pretty-print-1-before.png) | ![After](images/pretty-print-1-after.png) |
+| <img src="images/pretty-print-1-before.png" width="400"> | <img src="images/pretty-print-1-after.png" width="400"> |
 
 ## Installation
 
