@@ -21,6 +21,8 @@ Pretty Print makes complex formulas easier to read.
 | <img src="images/pretty-print-3-before.png" height="150"> | <img src="images/pretty-print-3-after.png" height="300"> |
 | <img src="images/pretty-print-4-before.png" height="150"> | <img src="images/pretty-print-4-after.png" height="150"> |
 
+See [EXAMPLES.md](EXAMPLES.md) for a fuller set of before/after formulas.
+
 More features will be added here as they are carved out of Northbound's
 internal add-in.
 
