@@ -27,18 +27,6 @@ After:
 
 Before:
 ```
-=CONCAT("Hello ""World,""","End")
-```
-
-After:
-```
-=CONCAT("Hello ""World,""", "End")
-```
-
-## Example 3
-
-Before:
-```
 =IF(TRIM([@[UTC Offset]])<>"", $B$2 + ([@[UTC Offset]]/24), "")
 ```
 
@@ -51,7 +39,7 @@ After:
 )
 ```
 
-## Example 4
+## Example 3
 
 Before:
 ```
@@ -63,7 +51,7 @@ After:
 =IF(TRUE, IF(A1 = 1, B1 + C1, D1), FALSE)
 ```
 
-## Example 5
+## Example 4
 
 Before:
 ```
@@ -105,7 +93,7 @@ After:
 )
 ```
 
-## Example 6
+## Example 5
 
 Before:
 ```
@@ -128,7 +116,7 @@ After:
 )
 ```
 
-## Example 7
+## Example 6
 
 Before:
 ```
@@ -144,7 +132,7 @@ After:
 )
 ```
 
-## Example 8
+## Example 7
 
 Before:
 ```
@@ -168,7 +156,7 @@ After:
 )
 ```
 
-## Example 9
+## Example 8
 
 Before:
 ```
@@ -190,7 +178,7 @@ After:
 )
 ```
 
-## Example 10
+## Example 9
 
 Before:
 ```
@@ -212,7 +200,7 @@ After:
 )
 ```
 
-## Example 11
+## Example 10
 
 Before:
 ```
@@ -228,7 +216,7 @@ After:
 )
 ```
 
-## Example 12
+## Example 11
 
 Before:
 ```
@@ -244,19 +232,7 @@ After:
 )
 ```
 
-## Example 13
-
-Before:
-```
-=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)
-```
-
-After:
-```
-=SUM(XLOOKUP(A1, Table1[Lookup], Table1[Value], 0) * B1, C1)
-```
-
-## Example 14
+## Example 12
 
 Before:
 ```
@@ -272,31 +248,7 @@ After:
 )
 ```
 
-## Example 15
-
-Before:
-```
-=INDIRECT(ADDRESS(A1,B1,4))
-```
-
-After:
-```
-=INDIRECT(ADDRESS(A1, B1, 4))
-```
-
-## Example 16
-
-Before:
-```
-=SUM(SEQUENCE(5, 1, A1, 1) * B1)
-```
-
-After:
-```
-=SUM(SEQUENCE(5, 1, A1, 1) * B1)
-```
-
-## Example 17
+## Example 13
 
 Before:
 ```
@@ -312,7 +264,7 @@ After:
 )
 ```
 
-## Example 18
+## Example 14
 
 Before:
 ```
@@ -330,7 +282,7 @@ After:
 )
 ```
 
-## Example 19
+## Example 15
 
 Before:
 ```
@@ -346,7 +298,7 @@ After:
 )
 ```
 
-## Example 20
+## Example 16
 
 Before:
 ```
@@ -377,7 +329,7 @@ After:
 )($N70, $P70, $Q70, $O70)
 ```
 
-## Example 21
+## Example 17
 
 Before:
 ```
@@ -401,7 +353,7 @@ After:
 )
 ```
 
-## Example 22
+## Example 18
 
 Before:
 ```
@@ -421,7 +373,7 @@ After:
 )
 ```
 
-## Example 23
+## Example 19
 
 Before:
 ```
@@ -437,7 +389,7 @@ After:
 )
 ```
 
-## Example 24
+## Example 20
 
 Before:
 ```
@@ -473,7 +425,7 @@ After:
 )
 ```
 
-## Example 25
+## Example 21
 
 Before:
 ```
@@ -495,7 +447,7 @@ After:
 )
 ```
 
-## Example 26
+## Example 22
 
 Before:
 ```
@@ -511,31 +463,7 @@ After:
 )
 ```
 
-## Example 27
-
-Before:
-```
-=SUM([@[Revenue, Total]])
-```
-
-After:
-```
-=SUM([@[Revenue, Total]])
-```
-
-## Example 28
-
-Before:
-```
-=SUM([@[Total (Net)]])
-```
-
-After:
-```
-=SUM([@[Total (Net)]])
-```
-
-## Example 29
+## Example 23
 
 Before:
 ```
@@ -552,7 +480,7 @@ After:
 )
 ```
 
-## Example 30
+## Example 24
 
 Before:
 ```
@@ -568,7 +496,7 @@ After:
 )
 ```
 
-## Example 31
+## Example 25
 
 Before:
 ```
@@ -584,7 +512,7 @@ After:
 )
 ```
 
-## Example 32
+## Example 26
 
 Before:
 ```
