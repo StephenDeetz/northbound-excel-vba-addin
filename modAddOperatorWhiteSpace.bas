@@ -239,7 +239,11 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
       ElseIf TmpChar = "]" Then
         TmpBracketCnt = TmpBracketCnt - 1
         TmpInBrackets = (TmpBracketCnt > 0)
-      ElseIf TmpChar = "#" And Not TmpInSingleQuotes And Not TmpInBrackets Then
+      ElseIf TmpChar = "#" And Not TmpInSingleQuotes And Not TmpInBrackets And (TmpNextChar Like "[A-Za-z]") Then
+        ' Every error literal (#N/A, #REF!, #DIV/0!, etc.) has a letter right
+        ' after "#" -- a spilled-range marker (e.g. "A1#") doesn't, so this
+        ' guard keeps "A1#/2" from having its real "/" swallowed as if it
+        ' were still inside an error literal.
         TmpInErrorLiteral = True
       End If
     End If
@@ -464,6 +468,19 @@ Private Sub TestAddOperatorWhiteSpaceImplicitIntersection()
   TestAddOperatorWhiteSpaceExactHelper "=@A1:A10+B1", "=@A1:A10 + B1"
   TestAddOperatorWhiteSpaceExactHelper "=SUM(@Table1[Column1],1)", "=SUM(@Table1[Column1],1)"
   TestAddOperatorWhiteSpaceExactHelper "=@INDEX(A1:A10,1)*2", "=@INDEX(A1:A10,1) * 2"
+End Sub
+
+
+' Spilled-range operator "#" (e.g. A1#) is not an error literal -- an
+' operator immediately after it (division, in particular) must still get
+' spaced normally, not be swallowed as if still inside "#N/A"-style text.
+Private Sub TestAddOperatorWhiteSpaceSpilledRange()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
+  TestAddOperatorWhiteSpaceExactHelper "=A1#/2", "=A1# / 2"
+  TestAddOperatorWhiteSpaceExactHelper "=A1#*B1#", "=A1# * B1#"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM(A1#)", "=SUM(A1#)"
+  TestAddOperatorWhiteSpaceExactHelper "=A1#", "=A1#"
 End Sub
 
 

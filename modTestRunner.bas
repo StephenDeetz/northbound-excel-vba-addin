@@ -182,6 +182,7 @@ Public Sub RunAllTests()
   RunOneTest "TestAddOperatorWhiteSpacePercent"
   RunOneTest "TestAddOperatorWhiteSpaceExternalRefs"
   RunOneTest "TestAddOperatorWhiteSpaceImplicitIntersection"
+  RunOneTest "TestAddOperatorWhiteSpaceSpilledRange"
 
   ' modPrettyPrint.bas
   RunOneTest "TestRemoveQuotedSections"
