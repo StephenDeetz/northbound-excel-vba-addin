@@ -43,6 +43,23 @@ Private Function IsUnaryMinusContext(ByVal AStr As String) As Boolean
 End Function
 
 
+' True if the "+"/"-" at this position is the exponent sign of a scientific-
+' notation number literal (e.g. "1E+21", "2.5E-3"), not a binary operator --
+' i.e. the text built so far ends in digit-E/e, and the following char is a
+' digit.
+Private Function IsScientificExponentContext(ByVal AStr As String, ByVal ANextChar As String) As Boolean
+  Dim TmpLen As Long
+
+  TmpLen = Len(AStr)
+  If TmpLen < 2 Then Exit Function
+  If Not (Right$(AStr, 1) Like "[Ee]") Then Exit Function
+  If Not (Mid$(AStr, TmpLen - 1, 1) Like "#") Then Exit Function
+  If Not (ANextChar Like "#") Then Exit Function
+
+  IsScientificExponentContext = True
+End Function
+
+
 Private Function IsOperator(ByVal AStr As String, _
                             ByVal AOps As Variant) As Boolean
 
@@ -116,6 +133,8 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
   Dim TmpInSingleQuotes    As Boolean
   Dim TmpInBrackets        As Boolean
   Dim TmpBracketCnt        As Long
+  Dim TmpInErrorLiteral    As Boolean 'e.g. #N/A, #DIV/0!, #REF! -- the "/" and
+                                       '"!" inside these aren't operators.
 
   Dim TmpMultiOps          As Variant
   Dim TmpSingleOps         As Variant
@@ -149,8 +168,16 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
       TmpNextThree = ""
     End If
 
-    ' Inside quotes or brackets ? Add character as-is
-    If TmpInQuotes Or TmpInSingleQuotes Or TmpInBrackets Then
+    ' An error literal (#N/A, #DIV/0!, #REF!, etc.) started earlier -- decide
+    ' here, before this char is used below, whether it still continues it.
+    If TmpInErrorLiteral Then
+      If Not (TmpChar Like "[A-Za-z0-9/!?_]") Then
+        TmpInErrorLiteral = False
+      End If
+    End If
+
+    ' Inside quotes, brackets, or an error literal ? Add character as-is
+    If TmpInQuotes Or TmpInSingleQuotes Or TmpInBrackets Or TmpInErrorLiteral Then
       TmpStr = TmpStr & TmpChar
 
     Else
@@ -175,7 +202,9 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
       If IsOperator(TmpChar, TmpSingleOps) Then
         ' **Only add spaces if NOT inside brackets**
         If Not TmpInBrackets Then
-          If TmpChar = "-" And IsUnaryMinusContext(TmpStr) Then
+          If (TmpChar = "+" Or TmpChar = "-") And IsScientificExponentContext(TmpStr, TmpNextChar) Then
+            TmpStr = TmpStr & TmpChar
+          ElseIf TmpChar = "-" And IsUnaryMinusContext(TmpStr) Then
             TmpStr = TmpStr & TmpChar
           Else
             TmpStr = TrimEnd(TmpStr) & " " & TmpChar
@@ -210,6 +239,8 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
       ElseIf TmpChar = "]" Then
         TmpBracketCnt = TmpBracketCnt - 1
         TmpInBrackets = (TmpBracketCnt > 0)
+      ElseIf TmpChar = "#" And Not TmpInSingleQuotes And Not TmpInBrackets Then
+        TmpInErrorLiteral = True
       End If
     End If
 
@@ -376,6 +407,72 @@ Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
   TestAddOperatorWhiteSpaceExactHelper "=A1--B1", "=A1--B1"
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 - --B1, TRUE, FALSE)", "=IF(A1 - --B1, TRUE, FALSE)"
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 = --B1, TRUE, FALSE)", "=IF(A1 = --B1, TRUE, FALSE)"
+End Sub
+
+
+' Scientific-notation exponent sign ("1E+21", "2.5E-3") must stay attached to
+' the number, not get spaced like a binary +/- operator.
+Private Sub TestAddOperatorWhiteSpaceScientificNotation()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
+  TestAddOperatorWhiteSpaceExactHelper "=1E+21*A1", "=1E+21 * A1"
+  TestAddOperatorWhiteSpaceExactHelper "=1E-21*A1", "=1E-21 * A1"
+  TestAddOperatorWhiteSpaceExactHelper "=2.5E+3+A1", "=2.5E+3 + A1"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM(1E+10,2E-5)", "=SUM(1E+10,2E-5)"
+
+  ' "E" not preceded by a digit (e.g. end of a word like TRUE) is still a
+  ' real binary operator and must be spaced normally.
+  TestAddOperatorWhiteSpaceExactHelper "=TRUE+1", "=TRUE + 1"
+End Sub
+
+
+' Error literals (#N/A, #DIV/0!, #REF!, etc.) must pass through untouched --
+' the "/" and "!" inside them are not operators.
+Private Sub TestAddOperatorWhiteSpaceErrorLiterals()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
+  TestAddOperatorWhiteSpaceExactHelper "=IF(-1>A1,TRUE,#N/A)", "=IF(-1 > A1,TRUE,#N/A)"
+  TestAddOperatorWhiteSpaceExactHelper "=IFERROR(A1/B1,#DIV/0!)", "=IFERROR(A1 / B1,#DIV/0!)"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1=1,#REF!,#NAME?)", "=IF(A1 = 1,#REF!,#NAME?)"
+  TestAddOperatorWhiteSpaceExactHelper "=#N/A+1", "=#N/A + 1"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM(#N/A,A1)", "=SUM(#N/A,A1)"
+  TestAddOperatorWhiteSpaceExactHelper "=IFNA(VLOOKUP(A1,B:C,2,FALSE),#N/A)", "=IFNA(VLOOKUP(A1,B:C,2,FALSE),#N/A)"
+  TestAddOperatorWhiteSpaceExactHelper "=IF(A1<0,#NUM!,SQRT(A1))", "=IF(A1 < 0,#NUM!,SQRT(A1))"
+  TestAddOperatorWhiteSpaceExactHelper "=CHOOSE(1,#NULL!,#CALC!,#SPILL!)", "=CHOOSE(1,#NULL!,#CALC!,#SPILL!)"
+  TestAddOperatorWhiteSpaceExactHelper "=A1=#N/A", "=A1 = #N/A"
+End Sub
+
+
+' External workbook references ('[Book1.xlsx]Sheet1'!A1) -- the "[...]" file
+' name and any "!" bracket/paren characters inside the single-quoted section
+' must not be mistaken for table-ref brackets or spaced as operators.
+Private Sub TestAddOperatorWhiteSpaceExternalRefs()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
+  TestAddOperatorWhiteSpaceExactHelper "='[Book1.xlsx]Sheet1'!A1+B1", "='[Book1.xlsx]Sheet1'!A1 + B1"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM('[Sales Data.xlsx]Q1'!A1:A10,'[Sales Data.xlsx]Q2'!A1:A10)", "=SUM('[Sales Data.xlsx]Q1'!A1:A10,'[Sales Data.xlsx]Q2'!A1:A10)"
+  TestAddOperatorWhiteSpaceExactHelper "='[Report (Final).xlsx]Summary'!$B$2<=A1", "='[Report (Final).xlsx]Summary'!$B$2 <= A1"
+  TestAddOperatorWhiteSpaceExactHelper "=IF('[Book1.xlsx]Sheet1'!A1="""",0,'[Book1.xlsx]Sheet1'!A1/2)", "=IF('[Book1.xlsx]Sheet1'!A1 = """",0,'[Book1.xlsx]Sheet1'!A1 / 2)"
+End Sub
+
+
+' Implicit intersection "@" is not an operator -- it must never get spaced,
+' regardless of what follows it (a plain range, a table ref, a function).
+Private Sub TestAddOperatorWhiteSpaceImplicitIntersection()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
+  TestAddOperatorWhiteSpaceExactHelper "=@A1:A10+B1", "=@A1:A10 + B1"
+  TestAddOperatorWhiteSpaceExactHelper "=SUM(@Table1[Column1],1)", "=SUM(@Table1[Column1],1)"
+  TestAddOperatorWhiteSpaceExactHelper "=@INDEX(A1:A10,1)*2", "=@INDEX(A1:A10,1) * 2"
+End Sub
+
+
+' "%" is a postfix operator and must never get spaced around.
+Private Sub TestAddOperatorWhiteSpacePercent()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+
+  TestAddOperatorWhiteSpaceExactHelper "=A1*50%+B1", "=A1 * 50% + B1"
+  TestAddOperatorWhiteSpaceExactHelper "=50%*A1", "=50% * A1"
 End Sub
 
 

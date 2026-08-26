@@ -177,6 +177,11 @@ Public Sub RunAllTests()
   RunOneTest "TestAddOperatorWhiteSpaceExact"
   RunOneTest "TestAddOperatorWhiteSpaceEdgeCases"
   RunOneTest "TestAddOperatorWhiteSpaceDoubleNeg"
+  RunOneTest "TestAddOperatorWhiteSpaceScientificNotation"
+  RunOneTest "TestAddOperatorWhiteSpaceErrorLiterals"
+  RunOneTest "TestAddOperatorWhiteSpacePercent"
+  RunOneTest "TestAddOperatorWhiteSpaceExternalRefs"
+  RunOneTest "TestAddOperatorWhiteSpaceImplicitIntersection"
 
   ' modPrettyPrint.bas
   RunOneTest "TestRemoveQuotedSections"
