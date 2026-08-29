@@ -38,7 +38,7 @@ internal add-in.
 4. For frequent use, right-click any Northbound ribbon button and choose
    "Add to Quick Access Toolbar" for one-click access from any ribbon tab.
 
-Note: There are also several YouTube videos that walk through Excel xlam add-in installation.
+**Note: There are also several YouTube videos that walk through Excel xlam add-in installation.**
 
 ## Source Code
 
