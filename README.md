@@ -28,6 +28,8 @@ internal add-in.
 
 ## Installation
 
+**Note: There are several YouTube videos that walk through Excel xlam add-in installation.**
+
 1. Download the latest release:
    https://github.com/StephenDeetz/northbound-excel-vba-addin/releases/latest
 2. Verify the download's SHA-256 hash matches the value published on the
@@ -37,8 +39,6 @@ internal add-in.
    [INSTALL.md](INSTALL.md).
 4. For frequent use, right-click any Northbound ribbon button and choose
    "Add to Quick Access Toolbar" for one-click access from any ribbon tab.
-
-**Note: There are also several YouTube videos that walk through Excel xlam add-in installation.**
 
 ## Source Code
 
