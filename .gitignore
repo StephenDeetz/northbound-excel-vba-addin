@@ -1,6 +1,7 @@
 *.xlam
 *.xlsm
 *.xlsx
+!Examples/*.xlsx
 ~$*
 *.tmp
 .DS_Store
