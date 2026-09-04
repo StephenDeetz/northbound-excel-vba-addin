@@ -1168,7 +1168,15 @@ Private Function MinifyCell(ByVal AFrmCell As Range) As Boolean
 
   'Saves
   TmpOrigStr = AFrmCell.Formula2
-  
+
+  'A merged cell's non-anchor members (e.g. B6 when A6:B6 is merged and A6
+  'holds the formula) can be flagged by SpecialCells(xlCellTypeFormulas) as
+  'formula cells even though their own Formula2 is blank. Nothing to do.
+  If TmpOrigStr = vbNullString Then
+    MinifyCell = True
+    Exit Function
+  End If
+
   'Get Minify Str
   TmpMinifyStr = ShortenFormula(TmpOrigStr)
 
@@ -1180,6 +1188,8 @@ Private Function MinifyCell(ByVal AFrmCell As Range) As Boolean
     Debug.Print "Minified: "
     Debug.Print TmpMinifyStr & vbCrLf
     Debug.Print "--------------------------------------------------------" & vbCrLf
+
+    Exit Function
   End If
 
   MinifyCell = True
@@ -1267,7 +1277,15 @@ Private Function PrettyPrintCell(ByVal AFrmCell As Range) As Boolean
   
   'Saves
   TmpOrigStr = AFrmCell.Formula2 'For Error Printing.
-  
+
+  'A merged cell's non-anchor members (e.g. B6 when A6:B6 is merged and A6
+  'holds the formula) can be flagged by SpecialCells(xlCellTypeFormulas) as
+  'formula cells even though their own Formula2 is blank. Nothing to do.
+  If TmpOrigStr = vbNullString Then
+    PrettyPrintCell = True
+    Exit Function
+  End If
+
   'Get Pretty Print Formula String
   TmpPPStr = PrettyPrint(TmpOrigStr)
   

@@ -140,13 +140,16 @@ Public Function AddOperatorWhiteSpace(ByVal AStr As String) As String
   Dim TmpSingleOps         As Variant
 
   ' Keep the leading "=" if present
-  If Len(AStr) > 0 Then
-    If Mid$(AStr, 1, 1) = "=" Then
-      TmpStr = "="
-      TmpCnt = 2  ' Start parsing from second character
-    Else
-      TmpCnt = 1
-    End If
+  If Len(AStr) = 0 Then
+    AddOperatorWhiteSpace = AStr
+    Exit Function
+  End If
+
+  If Mid$(AStr, 1, 1) = "=" Then
+    TmpStr = "="
+    TmpCnt = 2  ' Start parsing from second character
+  Else
+    TmpCnt = 1
   End If
 
   ' Define operator lists
@@ -411,6 +414,16 @@ Private Sub TestAddOperatorWhiteSpaceDoubleNeg()
   TestAddOperatorWhiteSpaceExactHelper "=A1--B1", "=A1--B1"
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 - --B1, TRUE, FALSE)", "=IF(A1 - --B1, TRUE, FALSE)"
   TestAddOperatorWhiteSpaceExactHelper "=IF(A1 = --B1, TRUE, FALSE)", "=IF(A1 = --B1, TRUE, FALSE)"
+End Sub
+
+
+' A blank AStr (e.g. Formula2 on a merged cell's non-anchor member, which
+' SpecialCells(xlCellTypeFormulas) can still flag as a formula cell) must
+' return blank, not error -- guards against the uninitialized-TmpCnt bug
+' where Len(AStr) = 0 left the loop's start position at 0 instead of 1.
+Private Sub TestAddOperatorWhiteSpaceBlankInput()
+  If IsStandaloneTestRun() Then ClearImmediateWindow
+  TestAddOperatorWhiteSpaceExactHelper "", ""
 End Sub
 
 
